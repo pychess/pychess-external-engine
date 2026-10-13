@@ -3,17 +3,24 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import time
+from pathlib import Path
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", default="normal")
+    parser.add_argument("--log")
     args = parser.parse_args()
     loaded = False
+    searches = 0
     for raw in sys.stdin:
         line = raw.strip()
+        if args.log:
+            with Path(args.log).open("a", encoding="utf-8") as log:
+                log.write(f"{os.getpid()} {line}\n")
         if line == "uci":
             if args.mode == "no-handshake":
                 continue
@@ -40,6 +47,32 @@ def main() -> None:
             if args.mode == "no-ready":
                 continue
             print("readyok", flush=True)
+        elif line.startswith("go "):
+            searches += 1
+            if args.mode == "oversized-output":
+                print("info " + "x" * (64 * 1024), flush=True)
+            else:
+                print(
+                    f"info nodes 100 time 5 pv e2e4 e7e5 score cp {searches * 10} "
+                    "depth 4 multipv 1",
+                    flush=True,
+                )
+            if args.mode == "crash":
+                return
+            if args.mode == "multi":
+                print(
+                    "info score cp -5 upperbound depth 3 multipv 2 pv d2d4 d7d5 nodes 150 time 7",
+                    flush=True,
+                )
+            if args.mode not in ("wait", "delayed-stop", "ignore-stop", "oversized-output"):
+                print("bestmove e2e4 ponder e7e5", flush=True)
+        elif line == "stop":
+            if args.mode == "ignore-stop":
+                continue
+            if args.mode == "delayed-stop":
+                print("info depth 10 multipv 1 score cp 999 nodes 500 time 100 pv d2d4", flush=True)
+                time.sleep(0.03)
+            print("bestmove e2e4", flush=True)
         elif line == "quit":
             if args.mode == "ignore-quit":
                 time.sleep(10)

@@ -4,10 +4,11 @@ Local native-engine analysis for the Pychess website.
 
 ## Status
 
-Phase 2 is in progress. The package can launch a locally configured UCI executable
-and discover its options and variants. The separate loopback prototype supports
-pairing, fake streamed evaluations, cancellation, and exclusive ownership between
-tabs. Real streamed search and Pychess UI integration are the next implementation steps.
+Phase 2 is in progress. The package launches configured UCI executables, discovers
+capabilities, and owns serialized searches with structured MultiPV events and bounded
+cancellation/restart/idle handling. Real native searches are verified through tests.
+Production rules admission and the paired HTTP search binding are next; the separate
+loopback prototype still returns fake results. Pychess UI integration has not started.
 
 The design and implementation checklist are maintained in
 [Pychess's external-engine plan](../pychess-variants/docs/external-engine.md)
@@ -66,6 +67,20 @@ uv run ruff check .
 uv run pyrefly check
 uv run python -m unittest discover -s tests -v
 ```
+
+Run the native smoke checks with your Fairy-Stockfish executable:
+
+```bash
+PYCHESS_TEST_ENGINE=/path/to/fairy-stockfish \
+  uv run python -m unittest discover -s tests -v
+```
+
+These checks disable NNUE and search trusted starting positions at depth 2 with
+MultiPV 2 for Chess, Shogi, Xiangqi, and Grand Chess. They verify legal best moves
+and PV prefixes with `pyffish`. Fake-engine tests cover cancellation, delayed stop
+output, competing ownership, hung engines, crashes, output bounds, and idle races.
+The production search controller requires a rules backend; test doubles are not
+an admission API and are not exposed to browser requests.
 
 Source is licensed under AGPL-3.0-or-later. See [NOTICE.md](NOTICE.md) and [LICENSE](LICENSE)
 for upstream attribution and distribution notes. Engines and networks are user-supplied.
