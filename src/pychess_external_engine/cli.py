@@ -82,13 +82,18 @@ def main() -> None:
                 config,
                 token=token,
                 origins=tuple(args.allow_origin) or DEFAULT_ORIGINS,
-                authority=f"127.0.0.1:{args.port}",
+                authority="127.0.0.1" if args.port == 80 else f"127.0.0.1:{args.port}",
                 alice_config=alice_config,
             )
             print(f"Local address: http://127.0.0.1:{args.port}", flush=True)
             print(f"Pairing token: {token}", flush=True)
             web.run_app(
-                app, host="127.0.0.1", port=args.port, access_log=None, handler_cancellation=True
+                app,
+                host="127.0.0.1",
+                port=args.port,
+                access_log=None,
+                handler_cancellation=True,
+                shutdown_timeout=config.stop_timeout,
             )
     except (ValueError, EngineError) as exc:
         parser.exit(1, f"Engine configuration failed: {exc}\n")

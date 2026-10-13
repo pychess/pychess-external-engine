@@ -1,0 +1,24 @@
+{
+  "platform": "Linux-6.18.24-061824-generic-x86_64-with-glibc2.43",
+  "artifact": "pychess_external_engine-0.1.0a1.tar.gz",
+  "sha256": "5e89cae51c27053ecd9939feef07074287cdeeb6ef231694c67a3e24dcda803e",
+  "aliceExtra": false,
+  "checks": [
+    {
+      "python": "3.13.13",
+      "package": "0.1.0a1",
+      "rulesVersion": [
+        0,
+        0,
+        90
+      ],
+      "tests": 73,
+      "testSeconds": 23.164,
+      "installedCode": true,
+      "cliHelp": "passed",
+      "cliStartupPairingShutdown": "passed",
+      "result": "passed"
+    }
+  ],
+  "result": "passed"
+}

@@ -11,7 +11,9 @@ positions, histories and PVs with geometry and material limits. Custom definitio
 are checked with the native engine, loaded before discovery, and replaced on
 rules-hash changes. The sibling Pychess checkout now provides source selection,
 pairing and native evaluation/PV display for single-board analysis. Deployment and
-release preparation remain separate steps.
+package publication remain separate steps.
+
+Start with the [installation and usage guide](docs/installation.md).
 
 The design and implementation checklist are maintained in
 [Pychess's external-engine plan](../pychess-variants/docs/external-engine.md)
@@ -37,8 +39,9 @@ remain deferred.
 
 ## Development installation and engine discovery
 
-Python 3.11 or later is required. The development environment is currently verified
-on Python 3.13.13; broader interpreter/OS installation checks remain a release task.
+Python 3.11–3.14 is the tested range. Clean-install evidence is recorded in
+[the compatibility matrix](docs/compatibility.md). The verified OS is Linux x86_64;
+other operating systems remain unverified.
 
 ```bash
 uv sync --extra dev
@@ -152,6 +155,23 @@ uv run python -m tools.ui_probe --browser edge --variant alice --without-wasm \
 For native unit checks, add `PYCHESS_TEST_ALICE_ENGINE` and optionally
 `PYCHESS_TEST_ALICE_NETWORK` alongside `PYCHESS_TEST_ENGINE`. Without the network
 variable, Alice tests use zero diagnostic evaluation.
+
+Build and repeat clean installation checks from this checkout:
+
+```bash
+uv build
+PYCHESS_TEST_ENGINE=/path/to/fairy-stockfish \
+PYCHESS_TEST_ALICE_ENGINE=/path/to/alice-stockfish \
+PYCHESS_TEST_ALICE_NETWORK=/path/to/Alice_v1.nnue \
+  uv run python -m tools.install_probe \
+    --artifact dist/pychess_external_engine-0.1.0a1-py3-none-any.whl --alice
+```
+
+The probe checks fresh Linux environments for Python 3.11–3.14, installed-code
+imports, unit/native tests and the installed CLI's pairing/shutdown. Use repeated
+`--python` to select interpreters, or provide the source archive to check a source
+install. The wheel contains the application and license/notice, while the source
+archive also includes tests, probes, documentation and the lockfile.
 
 Development checks:
 

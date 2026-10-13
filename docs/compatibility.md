@@ -38,4 +38,25 @@ rules backend distinguishes optional repetition claims from immediate terminal
 positions; claimable positions remain searchable with their full history.
 
 Browser/OS evidence is recorded separately in [browser-compatibility.md](browser-compatibility.md).
-Clean-install and release checks remain open.
+
+## Clean installation
+
+On Linux x86_64, isolated wheel installs with the Alice extra passed all 73 tests on
+CPython 3.11.13, 3.12.9, 3.13.13 and 3.14.1. Each check confirms imports come from
+installed site-packages, runs CLI help, starts the installed CLI, pairs to its HTTP
+API, begins native search, and verifies Ctrl+C releases its native/rules subprocesses.
+See [the wheel receipt](results/install-wheel-linux-2026-10-13.json).
+
+A clean source-archive install also passes on Python 3.13.13 without the Alice extra:
+73 tests collected, the six optional Alice checks skipped; ordinary native checks and
+CLI pairing/shutdown pass. See [the source receipt](results/install-sdist-linux-2026-10-13.json).
+The artifact hashes identify those tested builds. Final documentation can be added
+without changing their runtime modules; artifact inspection records that comparison.
+
+The tested interpreter range is CPython 3.11–3.14. Other operating systems,
+architectures and interpreter versions remain unverified. A Linux CI matrix is
+prepared for these four versions; it does not claim that hosted CI has already run.
+
+See [installation.md](installation.md) for installation, pairing, resources, networks,
+custom rules, Alice, permissions and troubleshooting. Publication and deployment
+are separate actions.

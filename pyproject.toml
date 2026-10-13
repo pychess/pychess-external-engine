@@ -9,7 +9,7 @@ description = "Local native UCI engine analysis for Pychess"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "AGPL-3.0-or-later"
-license-files = ["LICENSE"]
+license-files = ["LICENSE", "NOTICE.md"]
 dependencies = ["aiohttp>=3.12,<4", "pyffish==0.0.90"]
 
 [project.optional-dependencies]
