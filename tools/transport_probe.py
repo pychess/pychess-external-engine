@@ -49,18 +49,14 @@ def validate_origin(origin: str) -> str:
         or parsed.query
         or parsed.fragment
     ):
-        raise ValueError(
-            "An allowed origin must be a complete HTTP(S) origin without a path"
-        )
+        raise ValueError("An allowed origin must be a complete HTTP(S) origin without a path")
     # Reading port validates malformed and out-of-range ports.
     _ = parsed.port
     return origin
 
 
 def error(status: int, code: str) -> web.Response:
-    return web.json_response(
-        {"protocolVersion": 1, "error": {"code": code}}, status=status
-    )
+    return web.json_response({"protocolVersion": 1, "error": {"code": code}}, status=status)
 
 
 def cors_headers(origin: str) -> dict[str, str]:
@@ -90,9 +86,7 @@ async def access(
         requested_method = request.headers.get("Access-Control-Request-Method", "")
         requested_headers = {
             name.strip().lower()
-            for name in request.headers.get("Access-Control-Request-Headers", "").split(
-                ","
-            )
+            for name in request.headers.get("Access-Control-Request-Headers", "").split(",")
             if name.strip()
         }
         routes = {"/v1/capabilities": "GET", "/v1/analyse": "POST"}
@@ -232,9 +226,7 @@ def create_app(
     max_seconds: float = 30,
 ) -> web.Application:
     if len(token) < 32 or not token.isascii() or any(char.isspace() for char in token):
-        raise ValueError(
-            "Pairing tokens must contain at least 32 non-whitespace ASCII characters"
-        )
+        raise ValueError("Pairing tokens must contain at least 32 non-whitespace ASCII characters")
     app = web.Application(middlewares=[access], client_max_size=MAX_BODY_BYTES)
     app[STATE] = ProbeState(
         token,

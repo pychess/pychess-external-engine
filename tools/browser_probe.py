@@ -57,14 +57,10 @@ GET_CAPABILITIES = """async ({address, token}) => {
 }"""
 
 
-async def set_permission(
-    cdp: CDPSession, page: Page, origin: str, setting: str
-) -> None:
+async def set_permission(cdp: CDPSession, page: Page, origin: str, setting: str) -> None:
     contexts = await cdp.send("Target.getBrowserContexts")
     if len(contexts["browserContextIds"]) != 1:
-        raise AssertionError(
-            "Permission probe expects exactly one fresh browser context"
-        )
+        raise AssertionError("Permission probe expects exactly one fresh browser context")
     # Keep this browser-level session alive: detaching clears permission overrides.
     await cdp.send(
         "Browser.setPermission",
@@ -77,7 +73,8 @@ async def set_permission(
         },
     )
     await page.wait_for_function(
-        "async setting => (await navigator.permissions.query({name: 'loopback-network'})).state === setting",
+        "async setting => "
+        "(await navigator.permissions.query({name: 'loopback-network'})).state === setting",
         arg=setting,
         timeout=3000,
     )
@@ -142,14 +139,10 @@ async def check_browser(
             capabilities = await page.evaluate(GET_CAPABILITIES, args)
         if capabilities["status"] != 200 or not capabilities["body"]["prototype"]:
             raise AssertionError("Paired capabilities failed")
-        unauthorized = await page.evaluate(
-            GET_CAPABILITIES, {**args, "token": "incorrect"}
-        )
+        unauthorized = await page.evaluate(GET_CAPABILITIES, {**args, "token": "incorrect"})
         if unauthorized["status"] != 401:
             raise AssertionError("Incorrect pairing was not rejected")
-        events = await page.evaluate(
-            START_STREAM, {**args, "searchId": "browser-search-1"}
-        )
+        events = await page.evaluate(START_STREAM, {**args, "searchId": "browser-search-1"})
         if events[0]["type"] != "started" or events[1]["type"] != "evaluation":
             raise AssertionError("Expected streamed started/evaluation events")
         report["stream"] = "passed"
@@ -161,7 +154,9 @@ async def check_browser(
               const response = await fetch(address + '/v1/analyse', {
                 method: 'POST', credentials: 'omit', targetAddressSpace: 'loopback',
                 headers: {Authorization: 'Bearer ' + token, 'Content-Type': 'application/json'},
-                body: JSON.stringify({protocolVersion: 1, sessionId: 'second-tab', searchId: 'busy'})
+                body: JSON.stringify({
+                  protocolVersion: 1, sessionId: 'second-tab', searchId: 'busy'
+                })
               });
               return {status: response.status, body: await response.json()};
             }""",
@@ -176,9 +171,7 @@ async def check_browser(
         await page.evaluate("window.externalTransportProbe.controller.abort()")
         await asyncio.wait_for(app[STATE].idle.wait(), 2)
         report["abortCleanup"] = "passed"
-        replacement = await page.evaluate(
-            START_STREAM, {**args, "searchId": "browser-search-2"}
-        )
+        replacement = await page.evaluate(START_STREAM, {**args, "searchId": "browser-search-2"})
         if replacement[0]["searchId"] != "browser-search-2":
             raise AssertionError("Replacement stream had stale search identity")
         await page.close()
@@ -200,9 +193,7 @@ async def check_browser(
                 args,
             )
             if result != "TypeError":
-                raise AssertionError(
-                    "Denied loopback permission did not block fetch: " + result
-                )
+                raise AssertionError("Denied loopback permission did not block fetch: " + result)
             report["deniedPermission"] = "passed"
         else:
             report["deniedPermission"] = "pending manual verification"
@@ -225,9 +216,7 @@ async def check_browser(
 async def run(args: argparse.Namespace) -> None:
     reports: list[dict[str, object]] = []
     async with async_playwright() as playwright:
-        kind = getattr(
-            playwright, "chromium" if args.browser == "edge" else args.browser
-        )
+        kind = getattr(playwright, "chromium" if args.browser == "edge" else args.browser)
         executable = (
             shutil.which("chromium-browser") or shutil.which("chromium")
             if args.browser == "chromium"
@@ -249,10 +238,7 @@ async def run(args: argparse.Namespace) -> None:
             )
         finally:
             await browser.close()
-    output = (
-        json.dumps({"platform": platform.platform(), "checks": reports}, indent=2)
-        + "\n"
-    )
+    output = json.dumps({"platform": platform.platform(), "checks": reports}, indent=2) + "\n"
     if args.output:
         Path(args.output).write_text(output, encoding="utf-8")
     print(output, end="")
@@ -269,9 +255,7 @@ def main() -> None:
     )
     parser.add_argument("--site", default="https://www.pychess.org/analysis/chess")
     parser.add_argument("--output")
-    parser.add_argument(
-        "--headed", action="store_true", help="Open a disposable visible browser"
-    )
+    parser.add_argument("--headed", action="store_true", help="Open a disposable visible browser")
     parser.add_argument(
         "--manual-permission",
         action="store_true",

@@ -73,9 +73,7 @@ class TransportTest(unittest.IsolatedAsyncioTestCase):
             },
         )
         self.assertEqual(response.status, 204)
-        self.assertEqual(
-            response.headers["Access-Control-Allow-Private-Network"], "true"
-        )
+        self.assertEqual(response.headers["Access-Control-Allow-Private-Network"], "true")
         self.assertEqual(self.app[STATE].started, 0)
         self.assertEqual(await response.text(), "")
 
@@ -109,9 +107,7 @@ class TransportTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.app[STATE].released, 1)
         replacement = await self.start("search-2")
         self.assertEqual(replacement.status, 200)
-        self.assertEqual(
-            json.loads(await replacement.content.readline())["searchId"], "search-2"
-        )
+        self.assertEqual(json.loads(await replacement.content.readline())["searchId"], "search-2")
         replacement.close()
 
     async def test_second_tab_cannot_replace_first_tab(self) -> None:
@@ -131,13 +127,9 @@ class TransportTest(unittest.IsolatedAsyncioTestCase):
             {"protocolVersion": 1, "sessionId": "tab", "searchId": "bad\nidentity"},
             {"protocolVersion": 1, "sessionId": "", "searchId": "search"},
         ):
-            response = await self.client.post(
-                "/v1/analyse", headers=self.headers, json=data
-            )
+            response = await self.client.post("/v1/analyse", headers=self.headers, json=data)
             self.assertEqual(response.status, 400)
-        response = await self.client.post(
-            "/v1/analyse", headers=self.headers, data="not-json"
-        )
+        response = await self.client.post("/v1/analyse", headers=self.headers, data="not-json")
         self.assertEqual(response.status, 415)
         response = await self.client.post(
             "/v1/analyse", headers=self.headers, json={"padding": "x" * MAX_BODY_BYTES}
