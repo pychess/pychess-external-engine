@@ -129,7 +129,7 @@ async def check_browser(
         if not isolation["secure"]:
             raise AssertionError("HTTPS test page is not a secure context")
         report["context"] = isolation
-        if kind == "chromium" and not manual_permission:
+        if kind in ("chromium", "edge") and not manual_permission:
             permission_session = await browser.new_browser_cdp_session()
             await set_permission(permission_session, page, origin, "granted")
         args = {"address": address, "token": token}
@@ -225,14 +225,18 @@ async def check_browser(
 async def run(args: argparse.Namespace) -> None:
     reports: list[dict[str, object]] = []
     async with async_playwright() as playwright:
-        kind = getattr(playwright, args.browser)
+        kind = getattr(
+            playwright, "chromium" if args.browser == "edge" else args.browser
+        )
         executable = (
             shutil.which("chromium-browser") or shutil.which("chromium")
             if args.browser == "chromium"
             else None
         )
         browser = await kind.launch(
-            headless=not args.headed, executable_path=executable
+            headless=not args.headed,
+            executable_path=executable,
+            channel="msedge" if args.browser == "edge" else None,
         )
         try:
             reports.append(
@@ -259,7 +263,9 @@ async def run(args: argparse.Namespace) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--browser", choices=("chromium", "firefox", "webkit"), default="chromium"
+        "--browser",
+        choices=("chromium", "edge", "firefox", "webkit"),
+        default="chromium",
     )
     parser.add_argument("--site", default="https://www.pychess.org/analysis/chess")
     parser.add_argument("--output")

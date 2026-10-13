@@ -23,15 +23,21 @@ No Pychess header changes have been needed for the passing Chromium transport pr
 | Chromium 154.0.8037.57 | Linux x86_64 | All automated transport and allow/deny checks passed | Real user prompt and later WASM/native-engine UI checks |
 | Playwright Firefox 155.0 | Linux x86_64 | Headed probe passed after the user chose Allow: paired streaming, competing tabs, abort/tab-close cleanup, two released streams | Permission denial and later WASM/native-engine UI checks |
 | Playwright WebKit 26.6 | Linux x86_64 | HTTP `127.0.0.1` and `localhost` fetches rejected as “Not allowed to request resource” | Real Safari/macOS check and transport fallback evaluation |
-| Edge | — | Not tested | Real Edge check; Chromium evidence alone is insufficient |
+| Microsoft Edge 155.0.4283.45 | Linux x86_64 | All automated transport and allow/deny checks passed | Real user prompt and later WASM/native-engine UI checks |
 | Safari | — | Not tested | Real Safari/macOS check; Linux WebKit is not Safari |
 
-The first-release browser matrix remains open. HTTP loopback is proven for Chromium
-and Firefox on this Linux machine, but universal browser support has not been
+The first-release browser matrix remains open. HTTP loopback is proven for Chromium,
+Edge, and Firefox on this Linux machine, but universal browser support has not been
 established. The Firefox result was supplied by the user from the headed probe;
 see [the recorded report](results/firefox-linux-2026-10-13.json). If Safari also blocks this transport, evaluate
 explicit local TLS with a trusted certificate or the planned extension/native-messaging
 adapter before adding it to the supported matrix. Neither fallback is implemented.
+
+The installed Edge binary was verified separately with the same automated checks;
+see [its recorded report](results/edge-linux-2026-10-13.json). Safari is unavailable
+on this Ubuntu machine, as confirmed by the user. Do not require its result before
+implementing the native engine layer, and keep Safari outside the verified matrix
+until a real macOS check and any necessary fallback are complete.
 
 ## Reproduce
 
@@ -41,6 +47,7 @@ Install the required test browser with `python -m playwright install firefox` or
 
 ```bash
 python -m tools.browser_probe --browser chromium --output /tmp/chromium-probe.json
+python -m tools.browser_probe --browser edge --output /tmp/edge-probe.json
 python -m tools.browser_probe --browser firefox --headed --manual-permission --output /tmp/firefox-probe.json
 python -m tools.browser_probe --browser webkit --output /tmp/webkit-probe.json
 ```
