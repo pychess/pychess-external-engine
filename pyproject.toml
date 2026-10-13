@@ -30,4 +30,4 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pyrefly]
 project-includes = ["src", "tools", "tests"]
-search-path = ["src", "."]
+search-path = ["src", ".", "tests"]

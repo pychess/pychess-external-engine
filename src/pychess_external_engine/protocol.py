@@ -160,3 +160,23 @@ class SearchRequest:
 
     def event(self, kind: str, **fields: object) -> dict[str, object]:
         return {"protocolVersion": 1, "searchId": self.search_id, "type": kind, **fields}
+
+    def payload(self) -> dict[str, object]:
+        value: dict[str, object] = {
+            "protocolVersion": 1,
+            "sessionId": self.session_id,
+            "searchId": self.search_id,
+            "variant": self.variant,
+            "engineVariant": self.engine_variant,
+            "chess960": self.chess960,
+            "initialFen": self.initial_fen,
+            "moves": list(self.moves),
+            "currentFen": self.current_fen,
+            "threads": self.threads,
+            "hash": self.hash,
+            "multiPv": self.multi_pv,
+            "search": dict(self.search),
+        }
+        if self.rules is not None:
+            value["rules"] = {"ini": self.rules.ini, "sha256": self.rules.sha256}
+        return value

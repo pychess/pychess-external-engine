@@ -7,7 +7,8 @@ Local native-engine analysis for the Pychess website.
 Phase 2 is in progress. The package launches configured UCI executables, discovers
 capabilities, and owns serialized searches with structured MultiPV events and bounded
 cancellation/restart/idle handling. Real native searches are verified through tests.
-Production rules admission and the paired HTTP search binding are next; the separate
+An isolated `pyffish` worker validates positions, histories and PVs with geometry and
+material limits. Exact native rules loading and the paired HTTP search binding are next; the separate
 loopback prototype still returns fake results. Pychess UI integration has not started.
 
 The design and implementation checklist are maintained in
@@ -79,8 +80,11 @@ These checks disable NNUE and search trusted starting positions at depth 2 with
 MultiPV 2 for Chess, Shogi, Xiangqi, and Grand Chess. They verify legal best moves
 and PV prefixes with `pyffish`. Fake-engine tests cover cancellation, delayed stop
 output, competing ownership, hung engines, crashes, output bounds, and idle races.
-The production search controller requires a rules backend; test doubles are not
-an admission API and are not exposed to browser requests.
+Production rules validation uses a separate process for each search, keeping custom
+registrations and native failures out of the bridge process. Tests cover exact rules
+hashes, inherited snapshots, Chess960, pockets, promotion state, extended coordinates,
+S-Chess gating and malformed inputs. Native-engine compatibility with supplied custom
+definitions still needs its own check before the HTTP API can accept them.
 
 Source is licensed under AGPL-3.0-or-later. See [NOTICE.md](NOTICE.md) and [LICENSE](LICENSE)
 for upstream attribution and distribution notes. Engines and networks are user-supplied.

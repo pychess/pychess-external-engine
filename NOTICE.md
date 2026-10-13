@@ -7,6 +7,10 @@ This application follows the external-engine design studied in Lichess's
 The Python implementation is written for Pychess's local-only architecture.
 No upstream implementation files have been copied at this stage.
 
+The FEN geometry and material admission guards are adapted from Pychess's
+`server/utils.py` and `server/study/engine.py` under the project's AGPL license;
+source comments identify those adaptations.
+
 Application source is licensed under AGPL-3.0-or-later; see [LICENSE](LICENSE).
 The included license text is the standard GNU AGPL v3 text also used by Pychess.
 
