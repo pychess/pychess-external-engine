@@ -10,6 +10,7 @@ import platform
 import secrets
 import shutil
 from pathlib import Path
+from urllib.parse import urlencode
 
 from aiohttp import web
 from playwright.async_api import ViewportSize, async_playwright
@@ -113,6 +114,8 @@ async def check(args: argparse.Namespace) -> dict[str, object]:
                 page_errors: list[str] = []
                 page.on("pageerror", lambda error: page_errors.append(str(error).splitlines()[0]))
                 url = origin + "/analysis/" + args.variant
+                if args.fen:
+                    url += "?" + urlencode({"fen": args.fen})
                 await page.goto(url, wait_until="domcontentloaded")
                 cdp = None
                 if args.browser in ("chromium", "edge"):
@@ -267,6 +270,7 @@ def main() -> None:
     )
     parser.add_argument("--browser", choices=("chromium", "edge", "firefox"), default="edge")
     parser.add_argument("--variant", default="chess")
+    parser.add_argument("--fen", help="Start the test at this explicit variant FEN")
     parser.add_argument("--headed", action="store_true")
     parser.add_argument("--without-wasm", action="store_true")
     parser.add_argument("--output")

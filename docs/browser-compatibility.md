@@ -59,6 +59,10 @@ Reports: [Edge Chess](results/edge-ui-chess-linux-2026-10-13.json),
 [Chromium CWDA](results/chromium-ui-cwda-linux-2026-10-13.json).
 Wider variants, Study transitions, bridge restarts and Firefox UI remain open.
 
+An explicit E-file-king Capablanca position resolves to `embassy` and passes the same
+Edge UI checks; see [the castling-profile report](results/edge-ui-embassy-linux-2026-10-13.json).
+Use `tools.ui_probe --variant capablanca --fen '...'` to repeat that probe.
+
 ## Reproduce
 
 From this checkout, use an environment with `aiohttp` and `playwright` installed.
