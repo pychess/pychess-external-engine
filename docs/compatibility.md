@@ -1,84 +1,56 @@
-# Verified engine and variant coverage
+# Compatibility
 
-Compatibility is the intersection of native engine support, the pinned rules library,
-and the page's analysis permissions. A UCI handshake or a variant name alone is
-insufficient. Custom definitions are validated and loaded before rediscovery; an
-unsupported rule key or engine option causes rejection before search.
+The verification basis is release `0.1.0a1`. Availability requires matching native
+engine support, rules-library support and website analysis permission. A handshake,
+a variant name or successful replay alone does not establish search support.
 
-## Engine receipts
+## Platforms and browsers
 
-| Engine / rules backend | Verified cases | Evidence |
-| --- | --- | --- |
-| Fairy-Stockfish 051026 LB / pyffish 0.0.90, NNUE disabled | Chess including Black-to-move scores, Chess960 castling, Embassy castling, Shogi drops/promotions, Kyoto demotion, Janggi pass, Xiangqi/Grand ten-rank moves, Crazyhouse promoted captures and pocket state, S-Chess gating, full repetition history, terminal mate | [14-case native report](results/native-variants-linux-2026-10-13.json) |
-| Same ordinary engine with exact supplied rules | Orda, CWDA resolved FIDE/Clobberers profile, historical custom snapshots and ancestor changes | [Orda UI](results/edge-ui-orda-linux-2026-10-13.json), [CWDA UI](results/chromium-ui-cwda-linux-2026-10-13.json), [Study transitions](results/edge-study-linux-2026-10-13.json), native-rules tests |
-| Alice-Stockfish 1.0 / pyffish-alice 0.0.3 / Legacy Alice_v1.nnue | Fixed Alice rules, compact looking-glass FEN, complete history and legal PVs; transfer, castling, promotion, Black-to-move native search, ordinary/Alice switching | [Alice UI](results/edge-ui-alice-linux-2026-10-13.json), Alice rules/native HTTP tests |
+| Component | Verified coverage |
+| --- | --- |
+| Operating system | Linux x86_64; other OS/architectures remain unverified |
+| Python | CPython 3.11–3.14; clean installs tested on 3.11.13, 3.12.9, 3.13.13 and 3.14.1 |
+| Chromium 154.0.8037.57 | Native HTTPS-to-loopback transport, permission allow/deny and integrated UI |
+| Edge 155.0.4283.45 | Native transport/UI, permission allow/deny, ownership, cleanup and restart |
+| Firefox 155.0 | Transport with manual Allow passed; native UI and denial remain unverified |
+| Linux WebKit 26.6 | HTTP loopback rejected; this does not establish real Safari behaviour |
+| Safari | Unverified; no supported fallback implemented |
 
-These are representative shallow compatibility checks, not exhaustive variant-rule
-verification or engine-strength measurements. Other single-board variants may be
-available when both engine and rules library support them, but are not claimed as
-verified here. The frontend also checks exact definitions for site/custom variants.
+The browser probes preserved normal security, cross-origin isolation and
+SharedArrayBuffer. Tested Pychess responses used COOP `same-origin` and COEP
+`require-corp`; no header change was needed. Recheck served headers and permissions
+when changing transport or browser coverage. Browser permission overrides used by
+tests do not replace user consent in the actual UI.
 
-Alice Chess960, Alice custom rules, two-board scheduling, hidden-information search
-and native USI/UCCI are unsupported. Practice continues to use its browser backend.
-A Chess-only UCI engine can analyse Chess; it cannot acquire other variants by name
-alone. Tests also verify missing variant, Chess960 and custom-rule options reject
-before sending a position or starting search.
+## Engines and variants
 
-## Reproduce
+| Engine / rules | Verified representative cases |
+| --- | --- |
+| Fairy-Stockfish 051026 LB / pyffish 0.0.90, NNUE disabled | Chess, Black-to-move scores, Chess960/Embassy castling, Shogi drops/promotions, Kyoto demotion, Janggi pass, Xiangqi/Grand ten-rank moves, Crazyhouse promoted captures/pockets, S-Chess gating, repetition history and terminal mate |
+| Same engine with exact custom definitions | Orda, CWDA FIDE/Clobberers resolution, historical Study snapshots and changed inherited rules |
+| Alice-Stockfish 1.0 / pyffish-alice 0.0.3 / Legacy Alice_v1.nnue | Fixed Alice rules, compact layer FEN/history, legal PVs, transfers, castling/promotion, Black-to-move search and ordinary/Alice switching |
 
-```bash
-uv run python -m tools.compatibility_probe --engine /path/to/fairy-stockfish \
-  --setoption 'Use NNUE' false --output /tmp/native-compatibility.json
-```
+The native checks use representative shallow searches, not exhaustive rule or
+engine-strength verification. Other single-board variants can be available when both
+backends support them, but are not claimed as verified here. The pinned rules schema
+can limit custom features advertised by a newer native engine.
 
-The probe uses the production controller and isolated rules worker, keeps the initial
-FEN and complete move history, searches to depth 2 with MultiPV 2, and verifies every
-returned PV token. It closes native and rules subprocesses when finished. The pinned
-rules backend distinguishes optional repetition claims from immediate terminal
-positions; claimable positions remain searchable with their full history.
+Missing variant, Chess960 or custom-definition options fail before `position`/`go`.
+Alice Chess960, Alice custom rules, legacy 16-wide Alice FEN, two-board scheduling,
+hidden-information search and native USI/UCCI adapters are unsupported. Practice
+retains its browser backend.
 
-Browser/OS evidence is recorded separately in [browser-compatibility.md](browser-compatibility.md).
+## Integration coverage
 
-## Clean installation before the dependency change
+Native UI checks cover PV navigation, source selection, competing tabs, abort/tab-close
+cleanup, reconnect/forget, permission denial and bridge restart/token rotation. Exact
+rules checks cover CWDA without WASM search and Capablanca's initial Embassy profile.
+Study checks switch ordinary/custom chapters and historical versions of one public
+variant name, verifying actual board rules, Practice ownership and computer permissions.
+Settings were checked at desktop/mobile sizes in light/dark themes. Alice UI uses its
+NNUE network with WASM search blocked.
 
-On Linux x86_64, isolated wheel installs with the Alice extra passed all 73 tests on
-CPython 3.11.13, 3.12.9, 3.13.13 and 3.14.1. Each check confirms imports come from
-installed site-packages, runs CLI help, starts the installed CLI, pairs to its HTTP
-API, begins native search, and verifies Ctrl+C releases its native/rules subprocesses.
-See [the wheel receipt](results/install-wheel-linux-2026-10-13.json).
-
-A clean source-archive install also passes on Python 3.13.13 without the Alice extra:
-73 tests collected, the six optional Alice checks skipped; ordinary native checks and
-CLI pairing/shutdown pass. See [the source receipt](results/install-sdist-linux-2026-10-13.json).
-The artifact hashes identify those tested builds. Final documentation can be added
-without changing their runtime modules; [artifact inspection](results/artifact-inspection-linux-2026-10-13.json)
-records that comparison and the final wheel/source hashes.
-
-The tested interpreter range is CPython 3.11–3.14. Other operating systems,
-architectures and interpreter versions remain unverified. The Linux CI matrix checks these four versions.
-
-See [installation.md](installation.md) for installation, pairing, resources, networks,
-custom rules, Alice, permissions and troubleshooting. Publication and deployment
-are separate actions.
-
-## Required Alice dependency
-
-The first PyPI release requires `pyffish-alice==0.0.3` alongside `pyffish==0.0.90`.
-Default wheel/source installs and uvx runs include both rules backends. A separate
-Alice executable/network remains local configuration for Alice search. The earlier
-receipts above identify preview builds with an Alice extra; they remain historical
-evidence. Release receipts check plain package installation without any Alice extra.
-
-Plain installs of the published `0.1.0a1` release pass all 73 tests with no skips on
-Python 3.11.13, 3.12.9, 3.13.13 and 3.14.1; both rules libraries are imported from
-installed site-packages. The source install on 3.13.13 also passes all 73 tests.
-See the [required-dependency wheel receipt](results/required-alice-wheel-linux-2026-10-13.json)
-and [source receipt](results/required-alice-sdist-linux-2026-10-13.json).
-The [GitHub CI matrix](https://github.com/pychess/pychess-external-engine/actions/runs/38462183176)
-also passes on all four supported interpreter versions. Uploaded PyPI files have
-the exact SHA-256 hashes in these release receipts.
-
-[The publication receipt](results/pypi-release-0.1.0a1.json) records the exact
-PyPI file hashes, required dependencies, release source commit and CI run. The public
-uvx path installs the release and both rules libraries without any Alice extra;
-CLI help and ordinary/Alice native discovery pass from a separate temporary directory.
+Plain wheel installs include both rules libraries and were verified across the four
+Python versions above. Source installation, public uvx installation, CLI discovery,
+pairing and shutdown during active search are also checked. Runtime and browser
+checks are repeatable through [development.md](development.md).

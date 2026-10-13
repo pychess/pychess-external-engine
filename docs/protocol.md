@@ -1,16 +1,14 @@
 # Loopback analysis protocol v1
 
-Status: the installed application's native HTTP API implements this contract.
-The separate transport prototype uses fake output. The sibling Pychess checkout
-implements paired engine selection and native PV display.
+This contract governs paired native searches between the Pychess frontend and the
+local application. See [architecture.md](architecture.md) for process ownership.
 
 ## Connection
 
 Default address: `http://127.0.0.1:9670`. Bind only to loopback; the locally configured
 port may change. Do not accept remote addresses in the frontend connection UI.
-Native HTTP loopback is verified with Chromium 154 and Edge 155 on Linux. Firefox
-155 passed the transport prototype after manual permission. Other browsers remain
-subject to the compatibility checks in `browser-compatibility.md`.
+Browser support and transport restrictions are documented in
+[compatibility.md](compatibility.md).
 
 Both endpoints require an explicitly allowed HTTP(S) `Origin`, an exact local
 `Host` authority, and `Authorization: Bearer <pairing-token>`. A fresh 256-bit token
@@ -118,9 +116,6 @@ Initial production bounds, exposed in capabilities and adjustable downwards loca
   A locally configured wall-clock ceiling applies even to effectively infinite searches.
 - Handshake/readiness/stop deadlines: finite local configuration; failures restart
   the engine and report an error rather than leaving a lease held.
-
-The transport prototype uses a smaller 64 KiB body cap and a 30-second fake-stream
-ceiling. Engine-specific bounds and validation are implemented and tested in phase 2.
 
 ## Optional Alice adapter
 

@@ -1,19 +1,20 @@
 # Install and use the local engine app
 
-This is the first alpha package release, version 0.1.0a1. The deployed website may not yet show these new controls. The bridge requires
-the Pychess frontend changes described in the sibling project's plan.
+The published alpha is `0.1.0a1`. Connection controls require Pychess's external-engine
+frontend integration.
 
 ## Requirements
 
 Use Linux x86_64 with a compatible native UCI executable. The initial browser matrix
 is Chromium 154 or Edge 155 on Linux. Firefox's transport prototype passed, but its
 native UI and denial flow remain experimental. Safari, Windows and macOS are not
-verified for this release. See [browser evidence](browser-compatibility.md) and
-[variant/engine coverage](compatibility.md).
+verified for this release. See [compatibility](compatibility.md) for browser and
+engine coverage.
 
 Clean installations are verified on CPython 3.11.13, 3.12.9, 3.13.13 and 3.14.1.
 The supported interpreter range is Python 3.11–3.14; newer versions remain unverified.
-The package requires pinned pyffish 0.0.90 and pyffish-alice 0.0.3. If a matching binary wheel is unavailable, dependency installation
+The package requires pinned pyffish 0.0.90 and pyffish-alice 0.0.3. If a matching
+binary wheel is unavailable, dependency installation
 may require a C++ compiler and Python development headers. The application wheel
 itself contains Python code; native engines and networks are not bundled.
 
@@ -28,10 +29,9 @@ uvx --python 3.13 pychess-external-engine@0.1.0a1 \
 ```
 
 uv manages Python and the isolated dependencies; there is no project checkout or
-manual virtualenv setup. Both rules libraries are required dependencies. A matching
-Python can be downloaded by uv when missing. Engines and networks are not downloaded
+manual virtualenv setup. Both rules libraries are required dependencies. uv can
+download a matching Python when missing. Engines and networks are not downloaded
 by this release. Keep the terminal running, pair the browser, and stop with Ctrl+C.
-The remaining configuration examples also work as arguments to this uvx command.
 
 ## Install from this source checkout
 
@@ -43,8 +43,9 @@ python3 -m venv .venv
 .venv/bin/pychess-external-engine --help
 ```
 
-Both rules libraries are included. If using a built wheel, replace `.` with its path. To install source from an archive, unpack it and
-run the same commands inside the unpacked directory. Keep the source checkout when
+Both rules libraries are included. If using a built wheel, replace `.` with its path.
+To install source from an archive, unpack it and run the same commands inside the
+unpacked directory. Keep the source checkout when
 you want the reproducible probes under `tools/`; those development tools are not
 installed as part of the application wheel.
 
@@ -57,14 +58,16 @@ Make the native executable runnable and choose absolute paths. First inspect its
 advertised capabilities:
 
 ```bash
-.venv/bin/pychess-external-engine --engine /absolute/path/to/fairy-stockfish \
+uvx --python 3.13 pychess-external-engine@0.1.0a1 \
+  --engine /absolute/path/to/fairy-stockfish \
   --setoption 'Use NNUE' false --check-engine
 ```
 
 Then start the bridge:
 
 ```bash
-.venv/bin/pychess-external-engine --engine /absolute/path/to/fairy-stockfish \
+uvx --python 3.13 pychess-external-engine@0.1.0a1 \
+  --engine /absolute/path/to/fairy-stockfish \
   --setoption 'Use NNUE' false --max-threads 4 --max-hash 256
 ```
 
@@ -142,13 +145,15 @@ can limit a newer native engine's custom features.
 Alice rules are included automatically. Configure a separate Alice engine:
 
 ```bash
-.venv/bin/pychess-external-engine --engine /absolute/path/to/fairy-stockfish \
+uvx --python 3.13 pychess-external-engine@0.1.0a1 \
+  --engine /absolute/path/to/fairy-stockfish \
   --setoption 'Use NNUE' false --alice-engine /absolute/path/to/alice-stockfish \
   --alice-setoption EvalFile /absolute/path/to/Alice_v1.nnue
 ```
 
 Use repeated `--alice-engine-arg` and `--alice-setoption` for its local configuration.
-Startup qualifies Alice with a legal shallow search. A failed Alice configuration stops startup; omit Alice options to run the ordinary bridge.
+Startup qualifies Alice with a legal shallow search. A failed Alice configuration
+stops startup; omit Alice options to run the ordinary bridge.
 Alice uses compact `|` FEN and fixed rules; Alice Chess960/custom definitions are
 unsupported. The tested Alice-Stockfish 1.0 uses its Legacy Alice_v1.nnue network.
 Its NNUE-disabled mode produces zero diagnostic scores, useful for tests but not
@@ -169,6 +174,5 @@ meaningful positional analysis.
 | Permission denied | Change the browser's site permission and click Connect; the application does not repeatedly prompt |
 | Safari/WebKit cannot connect | This release does not support them; a trusted local-TLS or extension fallback remains future work |
 
-For reproducible evidence, see the native, browser and clean-install probes in the
-README. Reports omit pairing tokens. Preserve upstream licenses when distributing
+For development and repeatable checks, see [development.md](development.md). Preserve upstream licenses when distributing
 engines, dependencies or networks; [NOTICE.md](../NOTICE.md) records attribution.

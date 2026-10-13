@@ -5,7 +5,7 @@ This application follows the external-engine design studied in Lichess's
 [lila-engine](https://github.com/lichess-org/lila-engine), and
 [browser adapter](https://github.com/lichess-org/lila/blob/master/ui/lib/src/ceval/engines/externalEngine.ts).
 The Python implementation is written for Pychess's local-only architecture.
-No upstream implementation files have been copied at this stage.
+Adapted admission guards and the derived rule schema are identified below.
 
 The FEN geometry and material admission guards are adapted from Pychess's
 `server/utils.py` and `server/study/engine.py` under the project's AGPL license;
