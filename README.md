@@ -10,14 +10,13 @@ and bounded cancellation/restart/idle handling. An isolated `pyffish` worker val
 positions, histories and PVs with geometry and material limits. Custom definitions
 are checked with the native engine, loaded before discovery, and replaced on
 rules-hash changes. The sibling Pychess checkout now provides source selection,
-pairing and native evaluation/PV display for single-board analysis. Deployment and
-package publication remain separate steps.
+pairing and native evaluation/PV display for single-board analysis. The initial package release is version `0.1.0a1`. Website deployment is separate.
 
-Start with the [installation and usage guide](docs/installation.md).
+Start with the [installation and usage guide](https://github.com/pychess/pychess-external-engine/blob/main/docs/installation.md).
 
 The design and implementation checklist are maintained in
-[Pychess's external-engine plan](../pychess-variants/docs/external-engine.md)
-in the sibling checkout. Its repository path is `docs/external-engine.md` in
+[Pychess's external-engine plan](https://github.com/pychess/pychess-variants/blob/external-engine-analysis/docs/external-engine.md)
+in the Pychess integration branch. Its repository path is `docs/external-engine.md` in
 [pychess-variants](https://github.com/pychess/pychess-variants).
 
 ## Design
@@ -33,14 +32,30 @@ the search; `pyffish` validates positions, histories, and principal variations.
 
 The first implementation step is to prove HTTPS-to-loopback streaming and cancellation
 in supported browsers. Ordinary single-board Fairy-Stockfish analysis comes first,
-with exact custom rules included. Alice has an optional dedicated engine/rules
-adapter. Two-board analysis, hidden-information variants, and USI/UCCI adapters
+with exact custom rules included. Alice rules are included by default, with a
+dedicated locally configured native engine adapter. Two-board analysis, hidden-information variants, and USI/UCCI adapters
 remain deferred.
+
+## Run with uvx
+
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) once, then run
+this first alpha release with a supported interpreter:
+
+```bash
+uvx --python 3.13 pychess-external-engine@0.1.0a1 \
+  --engine /path/to/fairy-stockfish --setoption 'Use NNUE' false
+```
+
+Both `pyffish` and `pyffish-alice` are installed automatically. The native executables
+and networks are still supplied locally; engine download/setup automation is planned.
+For Alice search, add `--alice-engine /path/to/alice-stockfish` and its
+`--alice-setoption EvalFile /path/to/Alice_v1.nnue` option. Default installations
+include Alice rules even when only the ordinary engine is configured.
 
 ## Development installation and engine discovery
 
 Python 3.11–3.14 is the tested range. Clean-install evidence is recorded in
-[the compatibility matrix](docs/compatibility.md). The verified OS is Linux x86_64;
+[the compatibility matrix](https://github.com/pychess/pychess-external-engine/blob/main/docs/compatibility.md). The verified OS is Linux x86_64;
 other operating systems remain unverified.
 
 ```bash
@@ -75,7 +90,7 @@ the token. Use `--port` or repeated `--allow-origin` to configure local access;
 explicit origins replace the default Pychess origins. `--max-search-seconds` and
 `--idle-seconds` set the search ceiling and idle process lifetime. Networks and their
 paths are configured locally through engine options; the example disables NNUE.
-The HTTP contract is in [docs/protocol.md](docs/protocol.md). In the updated Pychess
+The HTTP contract is in [docs/protocol.md](https://github.com/pychess/pychess-external-engine/blob/main/docs/protocol.md). In the updated Pychess
 analysis page, open engine settings, enter the address/token and choose Connect.
 Enable analysis with the existing engine switch. Disconnect switches to the browser
 engine; Forget also removes the browser's saved pairing token. The development
@@ -107,7 +122,7 @@ permission denial, and mobile/desktop light/dark settings. Use `--variant orda`
 for exact site rules or `--variant cwda --without-wasm` to verify independence from
 browser search. Add `--restart-bridge` to verify shutdown, token rotation and re-pairing.
 Use `--variant alice --expect-unsupported` without an Alice engine to verify
-capability rejection in the UI. See [browser compatibility](docs/browser-compatibility.md) for evidence.
+capability rejection in the UI. See [browser compatibility](https://github.com/pychess/pychess-external-engine/blob/main/docs/browser-compatibility.md) for evidence.
 
 Verify Study chapter changes, historical rules snapshots, Practice ownership, and
 computer permissions with a temporary Study database:
@@ -119,10 +134,11 @@ uv run python -m tools.study_probe --browser edge --pychess ../pychess-variants 
 
 ## Optional Alice engine
 
-Install the optional rules library and configure a separate Alice-capable UCI engine:
+Alice rules validation is included in every installation. Configure a separate
+Alice-capable UCI engine to enable native Alice search:
 
 ```bash
-uv sync --extra dev --extra alice
+uv sync --extra dev
 uv run pychess-external-engine --engine /path/to/fairy-stockfish \
   --setoption 'Use NNUE' false --alice-engine /path/to/alice-stockfish \
   --alice-setoption EvalFile /path/to/Alice_v1.nnue
@@ -164,11 +180,12 @@ PYCHESS_TEST_ENGINE=/path/to/fairy-stockfish \
 PYCHESS_TEST_ALICE_ENGINE=/path/to/alice-stockfish \
 PYCHESS_TEST_ALICE_NETWORK=/path/to/Alice_v1.nnue \
   uv run python -m tools.install_probe \
-    --artifact dist/pychess_external_engine-0.1.0a1-py3-none-any.whl --alice
+    --artifact dist/pychess_external_engine-0.1.0a1-py3-none-any.whl
 ```
 
 The probe checks fresh Linux environments for Python 3.11–3.14, installed-code
-imports, unit/native tests and the installed CLI's pairing/shutdown. Use repeated
+imports including both required rules libraries, unit/native tests and the installed
+CLI's pairing/shutdown. Use repeated
 `--python` to select interpreters, or provide the source archive to check a source
 install. The wheel contains the application and license/notice, while the source
 archive also includes tests, probes, documentation and the lockfile.
@@ -202,10 +219,10 @@ rule-name schema also rejects keys it would otherwise silently ignore. Historica
 custom rules replace local `VariantPath` definitions for that search. A changed rules
 hash restarts the native engine to avoid stale or accumulating registrations.
 
-See [verified variant/engine coverage](docs/compatibility.md) for the representative
+See [verified variant/engine coverage](https://github.com/pychess/pychess-external-engine/blob/main/docs/compatibility.md) for the representative
 native and UI checks and their limits.
 
-Source is licensed under AGPL-3.0-or-later. See [NOTICE.md](NOTICE.md) and [LICENSE](LICENSE)
+Source is licensed under AGPL-3.0-or-later. See [NOTICE.md](https://github.com/pychess/pychess-external-engine/blob/main/NOTICE.md) and [LICENSE](https://github.com/pychess/pychess-external-engine/blob/main/LICENSE)
 for upstream attribution and distribution notes. Engines and networks are user-supplied.
 
 ## Transport prototype
@@ -229,9 +246,9 @@ marked `prototype: true` and must never be used as chess evaluations.
 Only one stream can be active. Concurrent requests receive `409 engine_busy`;
 aborting the active request releases ownership. Streams have a 30-second limit.
 This prototype establishes transport semantics; the complete engine protocol is
-specified in [docs/protocol.md](docs/protocol.md) for implementation in phases 2–4.
+specified in [docs/protocol.md](https://github.com/pychess/pychess-external-engine/blob/main/docs/protocol.md) for implementation in phases 2–4.
 
-See [browser compatibility](docs/browser-compatibility.md) for the verified Chromium
+See [browser compatibility](https://github.com/pychess/pychess-external-engine/blob/main/docs/browser-compatibility.md) for the verified Chromium
 transport, Firefox's successful headed permission check, and the Linux WebKit limitation.
 The browser probe uses a temporary local application and a fresh browser profile:
 

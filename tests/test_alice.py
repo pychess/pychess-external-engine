@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import importlib
-import importlib.util
 import json
 import os
 import sys
@@ -20,14 +19,11 @@ from pychess_external_engine.protocol import ProtocolError, SearchRequest
 from pychess_external_engine.rules import RulesWorker
 from pychess_external_engine.uci import EngineError
 
-HAS_ALICE = importlib.util.find_spec("pyffish_alice") is not None
-
 
 def alice_payload(**changes) -> dict:
     return {**payload(), "variant": "alice", "engineVariant": "alice", **changes}
 
 
-@unittest.skipUnless(HAS_ALICE, "Install the alice extra for Alice rules checks")
 class AliceRulesTest(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self.sf = importlib.import_module("pyffish_alice")
@@ -104,7 +100,6 @@ class AliceRulesTest(unittest.IsolatedAsyncioTestCase):
                 )
 
 
-@unittest.skipUnless(HAS_ALICE, "Install the alice extra")
 class AliceLifecycleTest(unittest.IsolatedAsyncioTestCase):
     async def test_bad_engine_or_incomplete_qualification_reaps_processes(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -171,10 +166,8 @@ class AliceLifecycleTest(unittest.IsolatedAsyncioTestCase):
 
 
 @unittest.skipUnless(
-    HAS_ALICE
-    and os.environ.get("PYCHESS_TEST_ENGINE")
-    and os.environ.get("PYCHESS_TEST_ALICE_ENGINE"),
-    "Set both native engines and install the alice extra",
+    os.environ.get("PYCHESS_TEST_ENGINE") and os.environ.get("PYCHESS_TEST_ALICE_ENGINE"),
+    "Set both native engines for Alice search checks",
 )
 class NativeAliceTest(unittest.IsolatedAsyncioTestCase):
     async def test_http_switching_pvs_and_competing_ownership(self) -> None:

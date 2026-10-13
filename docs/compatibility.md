@@ -39,7 +39,7 @@ positions; claimable positions remain searchable with their full history.
 
 Browser/OS evidence is recorded separately in [browser-compatibility.md](browser-compatibility.md).
 
-## Clean installation
+## Clean installation before the dependency change
 
 On Linux x86_64, isolated wheel installs with the Alice extra passed all 73 tests on
 CPython 3.11.13, 3.12.9, 3.13.13 and 3.14.1. Each check confirms imports come from
@@ -55,9 +55,16 @@ without changing their runtime modules; [artifact inspection](results/artifact-i
 records that comparison and the final wheel/source hashes.
 
 The tested interpreter range is CPython 3.11–3.14. Other operating systems,
-architectures and interpreter versions remain unverified. A Linux CI matrix is
-prepared for these four versions; it does not claim that hosted CI has already run.
+architectures and interpreter versions remain unverified. The Linux CI matrix checks these four versions.
 
 See [installation.md](installation.md) for installation, pairing, resources, networks,
 custom rules, Alice, permissions and troubleshooting. Publication and deployment
 are separate actions.
+
+## Required Alice dependency
+
+The first PyPI release requires `pyffish-alice==0.0.3` alongside `pyffish==0.0.90`.
+Default wheel/source installs and uvx runs include both rules backends. A separate
+Alice executable/network remains local configuration for Alice search. The earlier
+receipts above identify preview builds with an Alice extra; they remain historical
+evidence. Release receipts check plain package installation without any Alice extra.

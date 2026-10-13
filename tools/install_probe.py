@@ -110,13 +110,13 @@ async def cli_check(executable: Path, directory: Path) -> str:
             await process.wait()
 
 
-async def check(artifact: Path, versions: list[str], alice: bool) -> dict[str, object]:
+async def check(artifact: Path, versions: list[str]) -> dict[str, object]:
     root = Path(__file__).resolve().parents[1]
     receipt: dict[str, object] = {
         "platform": platform.platform(),
         "artifact": artifact.name,
         "sha256": hashlib.sha256(artifact.read_bytes()).hexdigest(),
-        "aliceExtra": alice,
+        "aliceDependency": True,
         "checks": [],
     }
     checks = []
@@ -133,17 +133,19 @@ async def check(artifact: Path, versions: list[str], alice: bool) -> dict[str, o
                 "install",
                 "--python",
                 str(python),
-                str(artifact) + ("[alice]" if alice else ""),
+                str(artifact),
                 cwd=directory,
             )
             metadata = json.loads(
                 await command(
                     str(python),
                     "-c",
-                    "import json,platform,importlib.metadata,pychess_external_engine,pyffish; "
+                    "import json,platform,importlib.metadata; "
+                    "import pychess_external_engine,pyffish,pyffish_alice; "
                     "print(json.dumps(dict(python=platform.python_version(),"
                     "package=importlib.metadata.version('pychess-external-engine'),"
-                    "rulesVersion=list(pyffish.version()),file=pychess_external_engine.__file__)))",
+                    "rulesVersion=list(pyffish.version()),aliceRulesVersion=list(pyffish_alice.version()),"
+                    "file=pychess_external_engine.__file__)))",
                     cwd=directory,
                 )
             )
@@ -189,13 +191,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--artifact", required=True, type=Path)
     parser.add_argument("--python", action="append", dest="versions")
-    parser.add_argument("--alice", action="store_true")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     receipt = asyncio.run(
-        check(
-            args.artifact.resolve(), args.versions or ["3.11", "3.12", "3.13", "3.14"], args.alice
-        )
+        check(args.artifact.resolve(), args.versions or ["3.11", "3.12", "3.13", "3.14"])
     )
     text = json.dumps(receipt, indent=2)
     if args.output:

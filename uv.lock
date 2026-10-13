@@ -696,12 +696,10 @@ source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "pyffish" },
+    { name = "pyffish-alice" },
 ]
 
 [package.optional-dependencies]
-alice = [
-    { name = "pyffish-alice" },
-]
 dev = [
     { name = "playwright" },
     { name = "pyrefly" },
@@ -713,11 +711,11 @@ requires-dist = [
     { name = "aiohttp", specifier = ">=3.12,<4" },
     { name = "playwright", marker = "extra == 'dev'", specifier = ">=1.50" },
     { name = "pyffish", specifier = "==0.0.90" },
-    { name = "pyffish-alice", marker = "extra == 'alice'", specifier = "==0.0.3" },
+    { name = "pyffish-alice", specifier = "==0.0.3" },
     { name = "pyrefly", marker = "extra == 'dev'", specifier = ">=1.3" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.16" },
 ]
-provides-extras = ["dev", "alice"]
+provides-extras = ["dev"]
 
 [[package]]
 name = "pyee"

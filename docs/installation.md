@@ -1,8 +1,6 @@
 # Install and use the local engine app
 
-This is a local preview, version 0.1.0a1. The source and build artifacts are prepared
-for review; publishing the package and deploying the updated website are separate
-steps. The deployed website may not yet show these new controls. The bridge requires
+This is the first alpha package release, version 0.1.0a1. The deployed website may not yet show these new controls. The bridge requires
 the Pychess frontend changes described in the sibling project's plan.
 
 ## Requirements
@@ -15,10 +13,25 @@ verified for this release. See [browser evidence](browser-compatibility.md) and
 
 Clean installations are verified on CPython 3.11.13, 3.12.9, 3.13.13 and 3.14.1.
 The supported interpreter range is Python 3.11–3.14; newer versions remain unverified.
-The package uses pinned pyffish 0.0.90 and optional
-pyffish-alice 0.0.3. If a matching binary wheel is unavailable, dependency installation
+The package requires pinned pyffish 0.0.90 and pyffish-alice 0.0.3. If a matching binary wheel is unavailable, dependency installation
 may require a C++ compiler and Python development headers. The application wheel
 itself contains Python code; native engines and networks are not bundled.
+
+## Recommended: uvx
+
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then launch the
+versioned alpha with your native engine:
+
+```bash
+uvx --python 3.13 pychess-external-engine@0.1.0a1 \
+  --engine /absolute/path/to/fairy-stockfish --setoption 'Use NNUE' false
+```
+
+uv manages Python and the isolated dependencies; there is no project checkout or
+manual virtualenv setup. Both rules libraries are required dependencies. A matching
+Python can be downloaded by uv when missing. Engines and networks are not downloaded
+by this release. Keep the terminal running, pair the browser, and stop with Ctrl+C.
+The remaining configuration examples also work as arguments to this uvx command.
 
 ## Install from this source checkout
 
@@ -30,14 +43,13 @@ python3 -m venv .venv
 .venv/bin/pychess-external-engine --help
 ```
 
-For optional Alice support, install `'.[alice]'` instead of `.`. If using a built
-wheel, replace `.` with its path. To install source from an archive, unpack it and
+Both rules libraries are included. If using a built wheel, replace `.` with its path. To install source from an archive, unpack it and
 run the same commands inside the unpacked directory. Keep the source checkout when
 you want the reproducible probes under `tools/`; those development tools are not
 installed as part of the application wheel.
 
-Users with `uv` can instead run `uv sync` (or `uv sync --extra alice`) and prefix
-commands with `uv run`. Contributors use `uv sync --extra dev --extra alice`.
+Users with `uv` can instead run `uv sync` and prefix commands with `uv run`.
+Contributors use `uv sync --extra dev`.
 
 ## Configure and start
 
@@ -127,18 +139,16 @@ sent by the page. Unknown rule keys, stale/missing inheritance, incompatible def
 and arbitrary file-path directives are rejected. Pinned rules-library compatibility
 can limit a newer native engine's custom features.
 
-For Alice, install the extra and configure a separate engine:
+Alice rules are included automatically. Configure a separate Alice engine:
 
 ```bash
-.venv/bin/python -m pip install '.[alice]'
 .venv/bin/pychess-external-engine --engine /absolute/path/to/fairy-stockfish \
   --setoption 'Use NNUE' false --alice-engine /absolute/path/to/alice-stockfish \
   --alice-setoption EvalFile /absolute/path/to/Alice_v1.nnue
 ```
 
 Use repeated `--alice-engine-arg` and `--alice-setoption` for its local configuration.
-Startup qualifies Alice with a legal shallow search. Missing bindings or a failed
-Alice configuration stops startup; omit Alice options to run the ordinary bridge.
+Startup qualifies Alice with a legal shallow search. A failed Alice configuration stops startup; omit Alice options to run the ordinary bridge.
 Alice uses compact `|` FEN and fixed rules; Alice Chess960/custom definitions are
 unsupported. The tested Alice-Stockfish 1.0 uses its Legacy Alice_v1.nnue network.
 Its NNUE-disabled mode produces zero diagnostic scores, useful for tests but not
