@@ -50,7 +50,19 @@ marked `prototype: true` and must never be used as chess evaluations.
 Only one stream can be active. Concurrent requests receive `409 engine_busy`;
 aborting the active request releases ownership. Streams have a 30-second limit.
 This prototype establishes transport semantics; the complete engine protocol is
-the next phase-1 deliverable.
+specified in [docs/protocol.md](docs/protocol.md) for implementation in phases 2–4.
+
+See [browser compatibility](docs/browser-compatibility.md) for the verified Chromium
+transport, Firefox's pending manual permission check, and the Linux WebKit limitation.
+The browser probe uses a temporary local application and a fresh browser profile:
+
+```bash
+python -m tools.browser_probe --browser chromium
+python -m tools.browser_probe --browser firefox --headed --manual-permission
+```
+
+These commands require `playwright` in addition to `aiohttp`; install its Firefox
+test browser with `python -m playwright install firefox` before the headed check.
 
 Run the transport tests:
 
