@@ -10,6 +10,7 @@ from collections import Counter
 import pyffish
 
 from .protocol import MAX_BODY_BYTES, MAX_PV_MOVES, VARIANT_RE, ProtocolError, SearchRequest
+from .rule_keys import RULE_KEYS
 
 HIDDEN_VARIANTS = frozenset(("fogofwar", "jieqi"))
 
@@ -103,6 +104,12 @@ def rule_sections(ini: str) -> tuple[str, ...]:
             key, value = (part.strip() for part in line.split("=", 1))
             if not key or not value:
                 raise ProtocolError("invalid_rules", "Empty rule assignment", 422)
+            if key not in RULE_KEYS:
+                raise ProtocolError(
+                    "incompatible_rules",
+                    "The pinned rules library does not recognize this rule",
+                    422,
+                )
             if key in ("maxRank", "maxFile"):
                 size = (
                     ord(value) - ord("a") + 1

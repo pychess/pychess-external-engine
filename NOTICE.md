@@ -11,6 +11,12 @@ The FEN geometry and material admission guards are adapted from Pychess's
 `server/utils.py` and `server/study/engine.py` under the project's AGPL license;
 source comments identify those adaptations.
 
+The versioned rule-name schema in `rule_keys.py` is derived from the `parser.cpp`
+and `piece.cpp` files in the pyffish 0.0.90 source distribution, Fairy-Stockfish,
+Copyright Fabian Fichter and contributors, GPL-3.0-or-later. The native checker
+uses a diagnostic copy with XBoard image tables disabled; the search engine loads
+the original hashed definition unchanged.
+
 Application source is licensed under AGPL-3.0-or-later; see [LICENSE](LICENSE).
 The included license text is the standard GNU AGPL v3 text also used by Pychess.
 

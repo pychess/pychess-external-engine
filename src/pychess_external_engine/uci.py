@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import asyncio
 import re
+import tempfile
 from dataclasses import dataclass
+from pathlib import Path
 
 from .config import EngineConfig, command_text
+from .protocol import ProtocolError, RulesDefinition
 
 MAX_LINE_BYTES = 64 * 1024
 MAX_HANDSHAKE_LINES = 4096
@@ -86,6 +89,8 @@ class UciEngine:
         self.options: dict[str, Option] = {}
         self.searching = False
         self.session: tuple[str, str, bool, str | None] | None = None
+        self.rules_digest: str | None = None
+        self.rules_directory: tempfile.TemporaryDirectory[str] | None = None
 
     @property
     def alive(self) -> bool:
@@ -96,7 +101,7 @@ class UciEngine:
         variant = self.options.get("uci_variant")
         return variant.choices if variant is not None else ("chess",)
 
-    async def open(self) -> None:
+    async def open(self, *, skip_variant_path: bool = False) -> None:
         if self.alive:
             return
         self.options = {}
@@ -116,6 +121,8 @@ class UciEngine:
         try:
             await self.discover()
             for name, value in self.config.options:
+                if skip_variant_path and name.casefold() == "variantpath":
+                    continue
                 await self.set_option(name, value)
             await self.set_optional("UCI_AnalyseMode", "true")
             await self.ready()
@@ -123,6 +130,36 @@ class UciEngine:
             if self.config.options:
                 await self.discover()
                 await self.ready()
+        except BaseException:
+            await self.close(force=True)
+            raise
+
+    async def prepare_rules(self, rules: RulesDefinition | None) -> None:
+        """Replace the registry on hash changes; existing Fairy keys cannot be overwritten."""
+        from .native_rules import check_native_rules
+
+        digest = rules.sha256 if rules is not None else None
+        if self.alive and self.rules_digest == digest:
+            return
+        await self.close(force=True)
+        await self.open(skip_variant_path=rules is not None)
+        if rules is None:
+            return
+        if "variantpath" not in self.options:
+            raise ProtocolError(
+                "unsupported_rules", "This engine cannot load custom definitions", 422
+            )
+        try:
+            self.rules_directory = tempfile.TemporaryDirectory(prefix="pychess-engine-")
+            directory = Path(self.rules_directory.name)
+            await check_native_rules(self.config, rules, directory)
+            path = directory / "rules.ini"
+            path.write_bytes(rules.ini.encode("utf-8"))
+            await self.set_option("VariantPath", str(path))
+            await self.ready()
+            await self.discover()
+            await self.ready()
+            self.rules_digest = digest
         except BaseException:
             await self.close(force=True)
             raise
@@ -252,3 +289,7 @@ class UciEngine:
             self.process = None
             self.searching = False
             self.session = None
+            self.rules_digest = None
+            if self.rules_directory is not None:
+                self.rules_directory.cleanup()
+                self.rules_directory = None

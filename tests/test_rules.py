@@ -96,6 +96,7 @@ class RulesTest(unittest.IsolatedAsyncioTestCase):
             "[testvariant:chess]\nmaxRank = 1000000\n",
             "[testvariant:chess]\nEvalFile = /arbitrary/file\n",
             "[testvariant:unknownbase]\n",
+            "[testvariant:chess]\nunknownRule = true\n",
             "[chess:chess]\n",
         ):
             name = "chess" if definition.startswith("[chess:") else "testvariant"

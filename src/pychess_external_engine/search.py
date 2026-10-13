@@ -156,8 +156,8 @@ class SearchController:
             self.rules = self.rules_factory()
             if self._maintenance is not None:
                 await asyncio.shield(self._maintenance)
-            await self.engine.open()
             self.terminal = await self.rules.start(request)
+            await self.engine.prepare_rules(request.rules)
             if request.engine_variant not in self.engine.variants:
                 raise ProtocolError(
                     "unsupported_variant", "The configured engine cannot search these rules", 422
