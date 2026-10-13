@@ -180,6 +180,9 @@ rule-name schema also rejects keys it would otherwise silently ignore. Historica
 custom rules replace local `VariantPath` definitions for that search. A changed rules
 hash restarts the native engine to avoid stale or accumulating registrations.
 
+See [verified variant/engine coverage](docs/compatibility.md) for the representative
+native and UI checks and their limits.
+
 Source is licensed under AGPL-3.0-or-later. See [NOTICE.md](NOTICE.md) and [LICENSE](LICENSE)
 for upstream attribution and distribution notes. Engines and networks are user-supplied.
 

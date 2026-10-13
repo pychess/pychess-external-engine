@@ -8,8 +8,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import pyffish
+
 from pychess_external_engine.config import EngineConfig
 from pychess_external_engine.protocol import ProtocolError, SearchRequest
+from pychess_external_engine.rules import RulesWorker
 from pychess_external_engine.search import Info, SearchController
 
 FAKE_ENGINE = Path(__file__).with_name("fake_engine.py")
@@ -78,6 +81,73 @@ class RequestTest(unittest.TestCase):
         self.assertEqual(request.moves, tuple(extended))
         with self.assertRaises(ProtocolError):
             SearchRequest.parse({**payload(), "rules": {**rules, "ini": ini + "\n"}})
+
+
+class CompatibilityFailureTest(unittest.IsolatedAsyncioTestCase):
+    async def test_missing_variant_chess960_and_custom_options_fail_before_position(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            log = Path(directory) / "commands"
+            controller = SearchController(
+                EngineConfig(
+                    (sys.executable, str(FAKE_ENGINE), "--mode", "minimal", "--log", str(log))
+                ),
+                RulesWorker,
+            )
+            try:
+                await controller.initialize()
+                fen = pyffish.start_fen("shogi")
+                ini = "[testvariant:chess]\n"
+                for data, code in (
+                    (
+                        {
+                            **payload(),
+                            "variant": "shogi",
+                            "engineVariant": "shogi",
+                            "initialFen": fen,
+                            "currentFen": fen,
+                        },
+                        "unsupported_variant",
+                    ),
+                    ({**payload(), "chess960": True}, "unsupported_chess960"),
+                    (
+                        {
+                            **payload(),
+                            "variant": "testvariant",
+                            "engineVariant": "testvariant",
+                            "rules": {
+                                "ini": ini,
+                                "sha256": hashlib.sha256(ini.encode()).hexdigest(),
+                            },
+                        },
+                        "unsupported_rules",
+                    ),
+                ):
+                    with self.assertRaises(ProtocolError) as error:
+                        await controller.begin(SearchRequest.parse(data))
+                    self.assertEqual(error.exception.code, code)
+                    self.assertIsNone(controller.active)
+                    self.assertNotIn(" position fen ", log.read_text())
+                    self.assertNotIn(" go ", log.read_text())
+            finally:
+                await controller.close()
+
+    async def test_repetition_keeps_root_and_entire_history_in_native_command(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            log = Path(directory) / "commands"
+            controller = SearchController(
+                EngineConfig((sys.executable, str(FAKE_ENGINE), "--log", str(log))), RulesWorker
+            )
+            moves = ["g1f3", "g8f6", "f3g1", "f6g8"] * 2
+            data = {**payload(), "moves": moves, "currentFen": pyffish.get_fen("chess", FEN, moves)}
+            try:
+                request = SearchRequest.parse(data)
+                await controller.begin(request)
+                self.assertFalse(controller.terminal)
+                events = [event async for event in controller.events(request)]
+                self.assertEqual(events[-1]["type"], "completed")
+                self.assertIn(" position fen " + FEN + " moves " + " ".join(moves), log.read_text())
+            finally:
+                await controller.close()
 
 
 class InfoTest(unittest.TestCase):

@@ -1,0 +1,208 @@
+{
+  "platform": "Linux-6.18.24-061824-generic-x86_64-with-glibc2.43",
+  "rulesVersion": [
+    0,
+    0,
+    90
+  ],
+  "depth": 2,
+  "multiPv": 2,
+  "checks": [
+    {
+      "case": "chess-start",
+      "variant": "chess",
+      "chess960": false,
+      "historyLength": 0,
+      "currentFen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "reason": "limit",
+      "bestmove": "e2e3",
+      "score": {
+        "cp": 84
+      },
+      "legalPvs": "passed",
+      "result": "passed"
+    },
+    {
+      "case": "black-score",
+      "variant": "chess",
+      "chess960": false,
+      "historyLength": 0,
+      "currentFen": "7k/8/8/8/8/8/8/Q6K b - - 0 1",
+      "reason": "limit",
+      "bestmove": "h8g8",
+      "score": {
+        "cp": -5948
+      },
+      "legalPvs": "passed",
+      "result": "passed"
+    },
+    {
+      "case": "chess960-castle",
+      "variant": "chess",
+      "chess960": true,
+      "historyLength": 1,
+      "currentFen": "7k/8/8/8/8/8/8/5RK1 b - - 1 1",
+      "reason": "limit",
+      "bestmove": "h8g8",
+      "score": {
+        "cp": -5299
+      },
+      "legalPvs": "passed",
+      "result": "passed"
+    },
+    {
+      "case": "embassy-castles",
+      "variant": "embassy",
+      "chess960": false,
+      "historyLength": 2,
+      "currentFen": "1kr6r/10/10/10/10/10/10/R5RK2 b - - 2 2",
+      "reason": "limit",
+      "bestmove": "c8h8",
+      "score": {
+        "cp": 22
+      },
+      "legalPvs": "passed",
+      "result": "passed"
+    },
+    {
+      "case": "shogi-drop",
+      "variant": "shogi",
+      "chess960": false,
+      "historyLength": 1,
+      "currentFen": "4k4/9/9/9/4P4/9/9/9/4K4[] b - - 0 1",
+      "reason": "limit",
+      "bestmove": "e9d8",
+      "score": {
+        "cp": -23
+      },
+      "legalPvs": "passed",
+      "result": "passed"
+    },
+    {
+      "case": "shogi-promote",
+      "variant": "shogi",
+      "chess960": false,
+      "historyLength": 1,
+      "currentFen": "4k4/4+P4/9/9/9/9/9/9/4K4[] b - - 0 1",
+      "reason": "limit",
+      "bestmove": "e9e8",
+      "score": {
+        "cp": 346
+      },
+      "legalPvs": "passed",
+      "result": "passed"
+    },
+    {
+      "case": "kyoto-demote",
+      "variant": "kyotoshogi",
+      "chess960": false,
+      "historyLength": 1,
+      "currentFen": "p+nks+l/5/5/L4/1SK+NP[] b - - 1 1",
+      "reason": "limit",
+      "bestmove": "d5d4+",
+      "score": {
+        "cp": 15
+      },
+      "legalPvs": "passed",
+      "result": "passed"
+    },
+    {
+      "case": "janggi-pass",
+      "variant": "janggi",
+      "chess960": false,
+      "historyLength": 1,
+      "currentFen": "rnba1abnr/4k4/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/4K4/RNBA1ABNR b - - 1 1",
+      "reason": "limit",
+      "bestmove": "a10a9",
+      "score": {
+        "cp": 15
+      },
+      "legalPvs": "passed",
+      "result": "passed"
+    },
+    {
+      "case": "xiangqi-ten-ranks",
+      "variant": "xiangqi",
+      "chess960": false,
+      "historyLength": 1,
+      "currentFen": "rCbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/7C1/9/RNBAKABNR b - - 0 1",
+      "reason": "limit",
+      "bestmove": "a10b10",
+      "score": {
+        "cp": 205
+      },
+      "legalPvs": "passed",
+      "result": "passed"
+    },
+    {
+      "case": "grand-ten-ranks",
+      "variant": "grand",
+      "chess960": false,
+      "historyLength": 0,
+      "currentFen": "r8r/1nbqkcabn1/pppppppppp/10/10/10/10/PPPPPPPPPP/1NBQKCABN1/R8R w - - 0 1",
+      "reason": "limit",
+      "bestmove": "g3g4",
+      "score": {
+        "cp": 38
+      },
+      "legalPvs": "passed",
+      "result": "passed"
+    },
+    {
+      "case": "pocket-promoted-capture",
+      "variant": "crazyhouse",
+      "chess960": false,
+      "historyLength": 1,
+      "currentFen": "7k/8/8/8/4R3/8/8/7K[P] b - - 0 1",
+      "reason": "limit",
+      "bestmove": "h8h7",
+      "score": {
+        "cp": -535
+      },
+      "legalPvs": "passed",
+      "result": "passed"
+    },
+    {
+      "case": "seirawan-gate",
+      "variant": "seirawan",
+      "chess960": false,
+      "historyLength": 1,
+      "currentFen": "rh3rk1/pp4pp/2n3q1/2pp1pP1/5B2/2PP1N2/PP3P2/R1HQ1RK1[] b - - 2 19",
+      "reason": "limit",
+      "bestmove": "b8d7",
+      "score": {
+        "cp": -376
+      },
+      "legalPvs": "passed",
+      "result": "passed"
+    },
+    {
+      "case": "repetition-history",
+      "variant": "chess",
+      "chess960": false,
+      "historyLength": 8,
+      "currentFen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 8 5",
+      "reason": "limit",
+      "bestmove": "e2e3",
+      "score": {
+        "cp": 84
+      },
+      "legalPvs": "passed",
+      "result": "passed"
+    },
+    {
+      "case": "terminal-mate",
+      "variant": "chess",
+      "chess960": false,
+      "historyLength": 0,
+      "currentFen": "7k/6Q1/6K1/8/8/8/8/8 b - - 0 1",
+      "reason": "terminal",
+      "bestmove": null,
+      "score": null,
+      "legalPvs": "passed",
+      "result": "passed"
+    }
+  ],
+  "engine": "Fairy-Stockfish 051026 LB",
+  "result": "passed"
+}

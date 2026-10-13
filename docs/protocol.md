@@ -1,7 +1,8 @@
 # Loopback analysis protocol v1
 
 Status: the installed application's native HTTP API implements this contract.
-The separate transport prototype uses fake output. Pychess UI integration is next.
+The separate transport prototype uses fake output. The sibling Pychess checkout
+implements paired engine selection and native PV display.
 
 ## Connection
 

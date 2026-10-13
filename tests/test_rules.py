@@ -163,6 +163,41 @@ class RulesTest(unittest.IsolatedAsyncioTestCase):
             await worker.start(SearchRequest.parse(data))
             self.assertEqual(await worker.normalize((move,)), [move])
 
+    async def test_drop_demotion_pass_and_promoted_capture_tokens(self) -> None:
+        for variant, fen, move in (
+            ("shogi", "4k4/9/9/9/9/9/9/9/4K4[P] w 0 1", "P@e5"),
+            ("kyotoshogi", pyffish.start_fen("kyotoshogi"), "a1a2-"),
+            ("janggi", pyffish.start_fen("janggi"), "e2e2"),
+            ("crazyhouse", "7k/8/8/8/4q~3/8/4R3/7K[] w - - 0 1", "e2e4"),
+        ):
+            with self.subTest(variant=variant):
+                data = {
+                    **payload(),
+                    "variant": variant,
+                    "engineVariant": variant,
+                    "initialFen": fen,
+                    "currentFen": fen,
+                }
+                worker = self.worker()
+                await worker.start(SearchRequest.parse(data))
+                self.assertEqual(await worker.normalize((move,)), [move])
+                current = pyffish.get_fen(variant, fen, [move], False, False, True)
+                await self.worker().start(
+                    SearchRequest.parse({**data, "moves": [move], "currentFen": current})
+                )
+                if variant == "crazyhouse":
+                    self.assertIn("[P]", current)
+                    with self.assertRaises(ProtocolError):
+                        await self.worker().start(
+                            SearchRequest.parse(
+                                {
+                                    **data,
+                                    "moves": [move],
+                                    "currentFen": current.replace("[P]", "[Q]"),
+                                }
+                            )
+                        )
+
     async def test_optional_chess_and_required_pocket_promotion_markers(self) -> None:
         for variant, root in (
             ("chess", "7k/P7/8/8/8/8/8/7K w - - 0 1"),
