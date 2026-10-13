@@ -4,14 +4,12 @@ Local native-engine analysis for the Pychess website.
 
 ## Status
 
-Phase 2 is in progress. The package launches configured UCI executables, discovers
-capabilities, and owns serialized searches with structured MultiPV events and bounded
-cancellation/restart/idle handling. Real native searches are verified through tests.
-An isolated `pyffish` worker validates positions, histories and PVs with geometry and
-material limits. Custom definitions are checked with the configured native engine,
-loaded before discovery, and replaced on rules-hash changes. The paired HTTP search
-binding is next; the separate
-loopback prototype still returns fake results. Pychess UI integration has not started.
+The paired native HTTP API is implemented. It launches configured UCI executables,
+discovers capabilities, and owns serialized searches with structured MultiPV events
+and bounded cancellation/restart/idle handling. An isolated `pyffish` worker validates
+positions, histories and PVs with geometry and material limits. Custom definitions
+are checked with the native engine, loaded before discovery, and replaced on
+rules-hash changes. Pychess UI integration has not started.
 
 The design and implementation checklist are maintained in
 [Pychess's external-engine plan](../pychess-variants/docs/external-engine.md)
@@ -59,8 +57,30 @@ then re-queries UCI capabilities so newly loaded custom variants are advertised.
 Search-controlled options such as Threads and UCI_Variant cannot be configured with
 `--setoption`; other configured options must be advertised by the engine.
 
-At this development stage the installed CLI requires `--check-engine` and exits
-after discovery. The prototype below remains explicitly fake.
+Start the local bridge (without `--check-engine`):
+
+```bash
+uv run pychess-external-engine --engine /path/to/fairy-stockfish \
+  --setoption 'Use NNUE' false
+```
+
+It binds to `127.0.0.1:9670` and prints a temporary pairing token. Restart to rotate
+the token. Use `--port` or repeated `--allow-origin` to configure local access;
+explicit origins replace the default Pychess origins. `--max-search-seconds` and
+`--idle-seconds` set the search ceiling and idle process lifetime. Networks and their
+paths are configured locally through engine options; the example disables NNUE.
+The HTTP contract is in [docs/protocol.md](docs/protocol.md). Until the Pychess UI
+is integrated, use the development browser probe to exercise the native API:
+
+```bash
+uv run python -m tools.browser_probe --browser edge \
+  --engine /path/to/fairy-stockfish --setoption 'Use NNUE' false
+```
+
+The probe runs its own temporary bridge and browser profile. Chromium and Edge on
+Linux pass native streaming, competing tabs, abort/tab-close cleanup and permission
+denial from the deployed HTTPS analysis page. Firefox's recorded check used the
+transport prototype; a native Firefox UI check remains pending.
 
 Development checks:
 

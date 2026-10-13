@@ -186,7 +186,7 @@ class SearchTest(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(controller.engine.searching)
 
     async def test_crash_and_oversized_output_release_ownership(self) -> None:
-        for mode in ("crash", "oversized-output"):
+        for mode in ("crash", "oversized-output", "output-flood"):
             controller = self.controller(mode)
             request = SearchRequest.parse(payload())
             await controller.begin(request)

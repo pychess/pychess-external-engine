@@ -49,8 +49,9 @@ def main() -> None:
             print("readyok", flush=True)
         elif line.startswith("go "):
             searches += 1
-            if args.mode == "oversized-output":
-                print("info " + "x" * (64 * 1024), flush=True)
+            if args.mode in ("oversized-output", "output-flood"):
+                size = 1000000 if args.mode == "output-flood" else 64 * 1024
+                print("info " + "x" * size, flush=True)
             else:
                 print(
                     f"info nodes 100 time 5 pv e2e4 e7e5 score cp {searches * 10} "

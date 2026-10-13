@@ -5,7 +5,12 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import secrets
 
+from aiohttp import web
+
+from .access import DEFAULT_ORIGINS, DEFAULT_PORT
+from .app import create_app
 from .config import EngineConfig
 from .uci import EngineError, UciEngine
 
@@ -28,22 +33,42 @@ def main() -> None:
     )
     parser.add_argument("--max-threads", type=int)
     parser.add_argument("--max-hash", type=int, default=512)
+    parser.add_argument("--port", type=int, default=DEFAULT_PORT)
+    parser.add_argument("--allow-origin", action="append", default=[])
+    parser.add_argument("--max-search-seconds", type=float, default=900)
+    parser.add_argument("--idle-seconds", type=float, default=300)
     parser.add_argument(
         "--check-engine", action="store_true", help="Discover capabilities and exit"
     )
     args = parser.parse_args()
-    if not args.check_engine:
-        parser.error("This development step supports --check-engine; the HTTP search API is next")
+    if not 1 <= args.port <= 65535:
+        parser.error("port must be between 1 and 65535")
     try:
         values = {
             "command": (args.engine, *args.engine_arg),
             "options": tuple(tuple(option) for option in args.setoption),
             "max_hash": args.max_hash,
+            "max_search_seconds": args.max_search_seconds,
+            "idle_seconds": args.idle_seconds,
         }
         if args.max_threads is not None:
             values["max_threads"] = args.max_threads
         config = EngineConfig(**values)
-        asyncio.run(check_engine(config))
+        if args.check_engine:
+            asyncio.run(check_engine(config))
+        else:
+            token = secrets.token_urlsafe(32)
+            app = create_app(
+                config,
+                token=token,
+                origins=tuple(args.allow_origin) or DEFAULT_ORIGINS,
+                authority=f"127.0.0.1:{args.port}",
+            )
+            print(f"Local address: http://127.0.0.1:{args.port}", flush=True)
+            print(f"Pairing token: {token}", flush=True)
+            web.run_app(
+                app, host="127.0.0.1", port=args.port, access_log=None, handler_cancellation=True
+            )
     except (ValueError, EngineError) as exc:
         parser.exit(1, f"Engine configuration failed: {exc}\n")
     except KeyboardInterrupt:

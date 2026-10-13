@@ -1,15 +1,15 @@
 # Loopback analysis protocol v1
 
-Status: phase-1 transport decisions. The prototype implements identity, access,
-streaming, and busy semantics with fake output. The full request schema below is
-the contract to implement in phases 2–4, not an already available engine API.
+Status: the installed application's native HTTP API implements this contract.
+The separate transport prototype uses fake output. Pychess UI integration is next.
 
 ## Connection
 
 Default address: `http://127.0.0.1:9670`. Bind only to loopback; the locally configured
 port may change. Do not accept remote addresses in the frontend connection UI.
-HTTP loopback is verified with Chromium 154 on Linux; other browsers remain subject
-to the compatibility checks in `browser-compatibility.md`.
+Native HTTP loopback is verified with Chromium 154 and Edge 155 on Linux. Firefox
+155 passed the transport prototype after manual permission. Other browsers remain
+subject to the compatibility checks in `browser-compatibility.md`.
 
 Both endpoints require an explicitly allowed HTTP(S) `Origin`, an exact local
 `Host` authority, and `Authorization: Bearer <pairing-token>`. A fresh 256-bit token

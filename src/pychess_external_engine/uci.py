@@ -268,6 +268,13 @@ class UciEngine:
         process = self.process
         if process is None:
             return
+
+        async def discard_output() -> None:
+            if process.stdout is not None:
+                while await process.stdout.read(8192):
+                    pass
+
+        discard = asyncio.create_task(discard_output())
         try:
             if process.returncode is None:
                 if force:
@@ -286,6 +293,8 @@ class UciEngine:
         except ProcessLookupError:
             await process.wait()
         finally:
+            discard.cancel()
+            await asyncio.gather(discard, return_exceptions=True)
             self.process = None
             self.searching = False
             self.session = None

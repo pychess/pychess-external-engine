@@ -52,16 +52,21 @@ class RulesDefinition:
         if not isinstance(value, dict) or set(value) != {"ini", "sha256"}:
             raise ProtocolError("invalid_rules", "Rules require exact INI text and its hash")
         ini, digest = value["ini"], value["sha256"]
+        if not isinstance(ini, str):
+            raise ProtocolError("invalid_rules", "Rules text must be UTF-8")
+        try:
+            encoded = ini.encode("utf-8")
+        except UnicodeEncodeError:
+            raise ProtocolError("invalid_rules", "Rules text must be valid UTF-8") from None
         if (
-            not isinstance(ini, str)
-            or not ini
-            or len(ini.encode()) > MAX_RULES_BYTES
+            not ini
+            or len(encoded) > MAX_RULES_BYTES
             or "\x00" in ini
             or not isinstance(digest, str)
             or re.fullmatch(r"[a-f0-9]{64}", digest) is None
         ):
             raise ProtocolError("invalid_rules", "Invalid rules payload")
-        if hashlib.sha256(ini.encode()).hexdigest() != digest:
+        if hashlib.sha256(encoded).hexdigest() != digest:
             raise ProtocolError(
                 "rules_mismatch", "Rules text does not match the supplied hash", 422
             )

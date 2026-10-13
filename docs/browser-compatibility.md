@@ -39,6 +39,13 @@ on this Ubuntu machine, as confirmed by the user. Do not require its result befo
 implementing the native engine layer, and keep Safari outside the verified matrix
 until a real macOS check and any necessary fallback are complete.
 
+Chromium and Edge also passed the production native API with Fairy-Stockfish
+`051026 LB` and NNUE disabled: validated PVs streamed from the HTTPS page, competing
+tabs were rejected, and abort/tab-close released real search work. Permission denial
+still blocked access. See the [Chromium native report](results/chromium-native-linux-2026-10-13.json)
+and [Edge native report](results/edge-native-linux-2026-10-13.json). These are transport
+and native API checks; engine-selection UI integration remains separate work.
+
 ## Reproduce
 
 From this checkout, use an environment with `aiohttp` and `playwright` installed.

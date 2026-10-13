@@ -22,15 +22,18 @@ from playwright.async_api import (
     Error as BrowserError,
 )
 
+from pychess_external_engine.app import STATE as NATIVE_STATE
+from pychess_external_engine.app import create_app as create_native_app
+from pychess_external_engine.config import EngineConfig
 from tools.transport_probe import STATE, create_app
 
-START_STREAM = """async ({address, token, searchId}) => {
+START_STREAM = """async ({address, token, analysis, searchId}) => {
   const controller = new AbortController();
   const response = await fetch(address + '/v1/analyse', {
     method: 'POST', credentials: 'omit', cache: 'no-store',
     targetAddressSpace: 'loopback', signal: controller.signal,
     headers: {Authorization: 'Bearer ' + token, 'Content-Type': 'application/json'},
-    body: JSON.stringify({protocolVersion: 1, sessionId: 'browser-probe', searchId})
+    body: JSON.stringify({...analysis, sessionId: 'browser-probe', searchId})
   });
   if (!response.ok) throw new Error('Stream HTTP ' + response.status);
   const reader = response.body.getReader();
@@ -81,19 +84,29 @@ async def set_permission(cdp: CDPSession, page: Page, origin: str, setting: str)
 
 
 async def check_browser(
-    browser: Browser, kind: str, site: str, *, manual_permission: bool = False
+    browser: Browser,
+    kind: str,
+    site: str,
+    *,
+    manual_permission: bool = False,
+    engine_config: EngineConfig | None = None,
 ) -> dict[str, object]:
     parsed = urlsplit(site)
     origin = f"{parsed.scheme}://{parsed.netloc}"
     token = secrets.token_urlsafe(32)
-    app = create_app(token=token, origins=(origin,), authority="", max_seconds=30)
+    if engine_config is None:
+        app = create_app(token=token, origins=(origin,), authority="", max_seconds=30)
+        state = app[STATE]
+    else:
+        app = create_native_app(engine_config, token=token, origins=(origin,), authority="")
+        state = app[NATIVE_STATE]
     runner = web.AppRunner(app, access_log=None, handler_cancellation=True)
     await runner.setup()
     listener = web.TCPSite(runner, "127.0.0.1", 0)
     await listener.start()
     # AppRunner exposes actual listener addresses without reaching into private sockets.
     port = runner.addresses[0][1]
-    app[STATE].authority = f"127.0.0.1:{port}"
+    state.authority = f"127.0.0.1:{port}"
     address = f"http://127.0.0.1:{port}"
     context = await browser.new_context()
     permission_session: CDPSession | None = None
@@ -101,6 +114,7 @@ async def check_browser(
         "browser": kind,
         "version": browser.version,
         "site": site,
+        "backend": "native" if engine_config else "prototype",
     }
     try:
         page = await context.new_page()
@@ -129,7 +143,24 @@ async def check_browser(
         if kind in ("chromium", "edge") and not manual_permission:
             permission_session = await browser.new_browser_cdp_session()
             await set_permission(permission_session, page, origin, "granted")
-        args = {"address": address, "token": token}
+        fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        args = {
+            "address": address,
+            "token": token,
+            "analysis": {
+                "protocolVersion": 1,
+                "variant": "chess",
+                "engineVariant": "chess",
+                "chess960": False,
+                "initialFen": fen,
+                "moves": [],
+                "currentFen": fen,
+                "search": {"depth": 128},
+                "threads": 1,
+                "hash": 16,
+                "multiPv": 1,
+            },
+        }
         if manual_permission:
             print(
                 "When the browser asks to access device apps/services, choose Allow.",
@@ -137,7 +168,9 @@ async def check_browser(
             )
         async with asyncio.timeout(60 if manual_permission else 10):
             capabilities = await page.evaluate(GET_CAPABILITIES, args)
-        if capabilities["status"] != 200 or not capabilities["body"]["prototype"]:
+        if capabilities["status"] != 200 or bool(capabilities["body"].get("prototype")) != (
+            engine_config is None
+        ):
             raise AssertionError("Paired capabilities failed")
         unauthorized = await page.evaluate(GET_CAPABILITIES, {**args, "token": "incorrect"})
         if unauthorized["status"] != 401:
@@ -146,36 +179,40 @@ async def check_browser(
         if events[0]["type"] != "started" or events[1]["type"] != "evaluation":
             raise AssertionError("Expected streamed started/evaluation events")
         report["stream"] = "passed"
+        if engine_config is not None:
+            if events[1].get("prototype") or not events[1]["pvs"][0]["moves"]:
+                raise AssertionError("Native evaluation did not contain a validated PV")
+            report["engine"] = capabilities["body"]["engine"]["name"]
         # A second page is a real competing tab, rather than a second HTTP-only client.
         other_page = await context.new_page()
         await other_page.goto(site, wait_until="domcontentloaded", timeout=30000)
         busy = await other_page.evaluate(
-            """async ({address, token}) => {
+            """async ({address, token, analysis}) => {
               const response = await fetch(address + '/v1/analyse', {
                 method: 'POST', credentials: 'omit', targetAddressSpace: 'loopback',
                 headers: {Authorization: 'Bearer ' + token, 'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                  protocolVersion: 1, sessionId: 'second-tab', searchId: 'busy'
+                  ...analysis, sessionId: 'second-tab', searchId: 'busy'
                 })
               });
               return {status: response.status, body: await response.json()};
             }""",
             args,
         )
-        if busy["status"] != 409 or app[STATE].active != (
+        if busy["status"] != 409 or state.active != (
             "browser-probe",
             "browser-search-1",
         ):
             raise AssertionError("Competing tab replaced the stream owner")
         report["competingTab"] = "passed"
         await page.evaluate("window.externalTransportProbe.controller.abort()")
-        await asyncio.wait_for(app[STATE].idle.wait(), 2)
+        await asyncio.wait_for(state.idle.wait(), 2)
         report["abortCleanup"] = "passed"
         replacement = await page.evaluate(START_STREAM, {**args, "searchId": "browser-search-2"})
         if replacement[0]["searchId"] != "browser-search-2":
             raise AssertionError("Replacement stream had stale search identity")
         await page.close()
-        await asyncio.wait_for(app[STATE].idle.wait(), 2)
+        await asyncio.wait_for(state.idle.wait(), 2)
         report["tabCloseCleanup"] = "passed"
         if permission_session is not None:
             await set_permission(permission_session, other_page, origin, "denied")
@@ -197,9 +234,9 @@ async def check_browser(
             report["deniedPermission"] = "passed"
         else:
             report["deniedPermission"] = "pending manual verification"
-        if app[STATE].active is not None or app[STATE].started != app[STATE].released:
+        if state.active is not None or state.started != state.released:
             raise AssertionError("Stream ownership was not fully released")
-        report["releasedStreams"] = app[STATE].released
+        report["releasedStreams"] = state.released
         report["result"] = "passed"
         return report
     except (AssertionError, BrowserError, TimeoutError) as exc:
@@ -234,6 +271,12 @@ async def run(args: argparse.Namespace) -> None:
                     args.browser,
                     args.site,
                     manual_permission=args.manual_permission,
+                    engine_config=EngineConfig(
+                        command=(args.engine,),
+                        options=tuple(tuple(option) for option in args.setoption),
+                    )
+                    if args.engine
+                    else None,
                 )
             )
         finally:
@@ -255,6 +298,10 @@ def main() -> None:
     )
     parser.add_argument("--site", default="https://www.pychess.org/analysis/chess")
     parser.add_argument("--output")
+    parser.add_argument("--engine", help="Test the production API with this native UCI executable")
+    parser.add_argument(
+        "--setoption", nargs=2, action="append", default=[], metavar=("NAME", "VALUE")
+    )
     parser.add_argument("--headed", action="store_true", help="Open a disposable visible browser")
     parser.add_argument(
         "--manual-permission",
