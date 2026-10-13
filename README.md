@@ -53,7 +53,7 @@ This prototype establishes transport semantics; the complete engine protocol is
 specified in [docs/protocol.md](docs/protocol.md) for implementation in phases 2–4.
 
 See [browser compatibility](docs/browser-compatibility.md) for the verified Chromium
-transport, Firefox's pending manual permission check, and the Linux WebKit limitation.
+transport, Firefox's successful headed permission check, and the Linux WebKit limitation.
 The browser probe uses a temporary local application and a fresh browser profile:
 
 ```bash
