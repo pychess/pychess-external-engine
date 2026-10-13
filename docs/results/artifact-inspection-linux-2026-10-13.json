@@ -1,0 +1,12 @@
+{
+  "wheel": "pychess_external_engine-0.1.0a1-py3-none-any.whl",
+  "wheelSha256": "2f6b0461413b26886bdc12c52b717afa7eb4daaacf471776e345692d97c66244",
+  "sdist": "pychess_external_engine-0.1.0a1.tar.gz",
+  "sdistSha256": "61894b5e6fa542ecf7206739582d488bed9598de8afc5eeca7a3b9dc14fcef0b",
+  "runtimeModulesMatchCleanTestedWheel": true,
+  "runtimeModuleCount": 12,
+  "licenseAndNotice": true,
+  "nativeEnginesOrNetworksBundled": false,
+  "sourceDocsTestsProbesLockfile": true,
+  "result": "passed"
+}

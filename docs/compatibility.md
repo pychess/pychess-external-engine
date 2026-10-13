@@ -51,7 +51,8 @@ A clean source-archive install also passes on Python 3.13.13 without the Alice e
 73 tests collected, the six optional Alice checks skipped; ordinary native checks and
 CLI pairing/shutdown pass. See [the source receipt](results/install-sdist-linux-2026-10-13.json).
 The artifact hashes identify those tested builds. Final documentation can be added
-without changing their runtime modules; artifact inspection records that comparison.
+without changing their runtime modules; [artifact inspection](results/artifact-inspection-linux-2026-10-13.json)
+records that comparison and the final wheel/source hashes.
 
 The tested interpreter range is CPython 3.11–3.14. Other operating systems,
 architectures and interpreter versions remain unverified. A Linux CI matrix is
