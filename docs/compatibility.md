@@ -68,3 +68,17 @@ Default wheel/source installs and uvx runs include both rules backends. A separa
 Alice executable/network remains local configuration for Alice search. The earlier
 receipts above identify preview builds with an Alice extra; they remain historical
 evidence. Release receipts check plain package installation without any Alice extra.
+
+Plain installs of the published `0.1.0a1` release pass all 73 tests with no skips on
+Python 3.11.13, 3.12.9, 3.13.13 and 3.14.1; both rules libraries are imported from
+installed site-packages. The source install on 3.13.13 also passes all 73 tests.
+See the [required-dependency wheel receipt](results/required-alice-wheel-linux-2026-10-13.json)
+and [source receipt](results/required-alice-sdist-linux-2026-10-13.json).
+The [GitHub CI matrix](https://github.com/pychess/pychess-external-engine/actions/runs/38462183176)
+also passes on all four supported interpreter versions. Uploaded PyPI files have
+the exact SHA-256 hashes in these release receipts.
+
+[The publication receipt](results/pypi-release-0.1.0a1.json) records the exact
+PyPI file hashes, required dependencies, release source commit and CI run. The public
+uvx path installs the release and both rules libraries without any Alice extra;
+CLI help and ordinary/Alice native discovery pass from a separate temporary directory.
