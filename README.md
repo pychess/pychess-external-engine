@@ -9,7 +9,9 @@ discovers capabilities, and owns serialized searches with structured MultiPV eve
 and bounded cancellation/restart/idle handling. An isolated `pyffish` worker validates
 positions, histories and PVs with geometry and material limits. Custom definitions
 are checked with the native engine, loaded before discovery, and replaced on
-rules-hash changes. Pychess UI integration has not started.
+rules-hash changes. The sibling Pychess checkout now provides source selection,
+pairing and native evaluation/PV display for single-board analysis. Deployment and
+release preparation remain separate steps.
 
 The design and implementation checklist are maintained in
 [Pychess's external-engine plan](../pychess-variants/docs/external-engine.md)
@@ -69,8 +71,11 @@ the token. Use `--port` or repeated `--allow-origin` to configure local access;
 explicit origins replace the default Pychess origins. `--max-search-seconds` and
 `--idle-seconds` set the search ceiling and idle process lifetime. Networks and their
 paths are configured locally through engine options; the example disables NNUE.
-The HTTP contract is in [docs/protocol.md](docs/protocol.md). Until the Pychess UI
-is integrated, use the development browser probe to exercise the native API:
+The HTTP contract is in [docs/protocol.md](docs/protocol.md). In the updated Pychess
+analysis page, open engine settings, enter the address/token and choose Connect.
+Enable analysis with the existing engine switch. Disconnect switches to the browser
+engine; Forget also removes the browser's saved pairing token. The development
+browser probe can exercise the native API independently:
 
 ```bash
 uv run python -m tools.browser_probe --browser edge \
@@ -81,6 +86,22 @@ The probe runs its own temporary bridge and browser profile. Chromium and Edge o
 Linux pass native streaming, competing tabs, abort/tab-close cleanup and permission
 denial from the deployed HTTPS analysis page. Firefox's recorded check used the
 transport prototype; a native Firefox UI check remains pending.
+
+Verify the integrated UI using a built sibling Pychess checkout and its development
+virtualenv (including its Mongo mock and Playwright dependencies):
+
+```bash
+uv run python -m tools.ui_probe --browser edge --pychess ../pychess-variants \
+  --engine /path/to/fairy-stockfish --setoption 'Use NNUE' false
+```
+
+This probe starts a Pychess test server with an in-memory database and the real local
+bridge. It serves the checkout through a synthetic HTTPS origin using Playwright
+routing; it does not modify the deployed website or disable browser security.
+It checks native PV navigation, competing tabs, tab closure, reconnect, forget,
+permission denial, and mobile/desktop light/dark settings. Use `--variant orda`
+for exact site rules or `--variant cwda --without-wasm` to verify independence from
+browser search. See [browser compatibility](docs/browser-compatibility.md) for evidence.
 
 Development checks:
 

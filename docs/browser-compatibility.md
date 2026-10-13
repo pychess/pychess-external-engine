@@ -46,6 +46,19 @@ still blocked access. See the [Chromium native report](results/chromium-native-l
 and [Edge native report](results/edge-native-linux-2026-10-13.json). These are transport
 and native API checks; engine-selection UI integration remains separate work.
 
+The integrated UI now passes in Edge for Chess and Orda, and Chromium for CWDA with
+WASM search deliberately blocked. The UI probe serves the built local Pychess
+checkout through a synthetic HTTPS origin with an in-memory database; it is separate
+from the earlier checks against the deployed page. Source selection, native PV-click
+navigation, competing tabs, tab-close cleanup, reconnect, forget and permission-denial
+messages pass. Settings fit desktop/mobile viewports in light/dark themes, with focus
+and browser-only NNUE-control visibility verified through computed styles.
+
+Reports: [Edge Chess](results/edge-ui-chess-linux-2026-10-13.json),
+[Edge Orda](results/edge-ui-orda-linux-2026-10-13.json), and
+[Chromium CWDA](results/chromium-ui-cwda-linux-2026-10-13.json).
+Wider variants, Study transitions, bridge restarts and Firefox UI remain open.
+
 ## Reproduce
 
 From this checkout, use an environment with `aiohttp` and `playwright` installed.
