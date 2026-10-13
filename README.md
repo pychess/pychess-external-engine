@@ -103,6 +103,14 @@ permission denial, and mobile/desktop light/dark settings. Use `--variant orda`
 for exact site rules or `--variant cwda --without-wasm` to verify independence from
 browser search. See [browser compatibility](docs/browser-compatibility.md) for evidence.
 
+Verify Study chapter changes, historical rules snapshots, Practice ownership, and
+computer permissions with a temporary Study database:
+
+```bash
+uv run python -m tools.study_probe --browser edge --pychess ../pychess-variants \
+  --engine /path/to/fairy-stockfish --setoption 'Use NNUE' false
+```
+
 Development checks:
 
 ```bash

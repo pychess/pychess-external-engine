@@ -1,0 +1,41 @@
+{
+  "browser": "edge",
+  "siteDelivery": "Local checkout with in-memory Study database",
+  "version": "155.0.4283.45",
+  "chapterSwitches": [
+    {
+      "chapter": "Chess",
+      "engineVariant": "chess",
+      "rulesHash": null
+    },
+    {
+      "chapter": "Orda",
+      "engineVariant": "orda",
+      "rulesHash": "e47435ffbb4b6f3615a7f7cb13ab120dcefd09832bb6d22aeeabe7c5ddbfbd96"
+    },
+    {
+      "chapter": "Snapshot false",
+      "engineVariant": "studysnap_9bb96453d04be11eab0e",
+      "rulesHash": "71a343ca706091d2871497b081c2d703b5bf582bc53abc1bff5e6385daba9948"
+    },
+    {
+      "chapter": "Snapshot true",
+      "engineVariant": "studysnap_54c00d689ffacaf46c55",
+      "rulesHash": "654c1702378d3540a332edb5d209c05439ff447956ede9df213b0cca9c30a247"
+    },
+    {
+      "chapter": "Snapshot false",
+      "engineVariant": "studysnap_9bb96453d04be11eab0e",
+      "rulesHash": "71a343ca706091d2871497b081c2d703b5bf582bc53abc1bff5e6385daba9948"
+    },
+    {
+      "chapter": "Chess",
+      "engineVariant": "chess",
+      "rulesHash": null
+    }
+  ],
+  "historicalSnapshots": "passed",
+  "practiceRemainsBrowserOwned": "passed",
+  "computerPermission": "passed",
+  "result": "passed"
+}

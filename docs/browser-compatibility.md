@@ -57,7 +57,13 @@ and browser-only NNUE-control visibility verified through computed styles.
 Reports: [Edge Chess](results/edge-ui-chess-linux-2026-10-13.json),
 [Edge Orda](results/edge-ui-orda-linux-2026-10-13.json), and
 [Chromium CWDA](results/chromium-ui-cwda-linux-2026-10-13.json).
-Wider variants, Study transitions, bridge restarts and Firefox UI remain open.
+Wider variants, bridge restarts and Firefox UI remain open.
+
+[The Edge Study report](results/edge-study-linux-2026-10-13.json) verifies real
+chapter transitions between Chess, Orda and two historical custom-rule snapshots.
+The browser board and native engine use each snapshot, including its pawn double-step
+rule. Practice and chapters without computer permission release native ownership
+and disable the connection button. Repeat with `python -m tools.study_probe`.
 
 An explicit E-file-king Capablanca position resolves to `embassy` and passes the same
 Edge UI checks; see [the castling-profile report](results/edge-ui-embassy-linux-2026-10-13.json).
