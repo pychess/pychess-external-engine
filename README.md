@@ -4,8 +4,9 @@ Local native-engine analysis for the Pychess website.
 
 ## Status
 
-Planning workspace created on 2026-10-13. The application is not implemented yet;
-there are no installation or runnable CLI commands at this stage.
+Phase 1 is in progress. A loopback transport prototype supports pairing, CORS,
+fake streamed evaluations, cancellation, and exclusive ownership between tabs.
+It does not run an engine or integrate with the Pychess UI yet.
 
 The design and implementation checklist are maintained in
 [Pychess's external-engine plan](../pychess-variants/docs/external-engine.md)
@@ -27,6 +28,35 @@ The first implementation step is to prove HTTPS-to-loopback streaming and cancel
 in supported browsers. Ordinary single-board Fairy-Stockfish analysis comes first,
 with exact custom rules included in the protocol design. Alice, two-board analysis,
 hidden-information variants, and USI/UCCI adapters need separate capability checks.
+
+## Transport prototype
+
+Run from this checkout with Python 3.11 or later and `aiohttp` installed:
+
+```bash
+uv run --with aiohttp python -m tools.transport_probe
+```
+
+The prototype binds only to `127.0.0.1:9670`, prints a temporary pairing token,
+and allows `https://www.pychess.org` and `https://pychess.org`. Restarting rotates
+the token. Use `--port` or repeated `--allow-origin` options to change local settings.
+Specifying allowed origins replaces the defaults.
+
+Requests to `GET /v1/capabilities` and `POST /v1/analyse` require an allowed `Origin`
+and `Authorization: Bearer <pairing-token>`. The analysis request contains
+`protocolVersion: 1`, `sessionId`, and `searchId`. Its streamed results are explicitly
+marked `prototype: true` and must never be used as chess evaluations.
+
+Only one stream can be active. Concurrent requests receive `409 engine_busy`;
+aborting the active request releases ownership. Streams have a 30-second limit.
+This prototype establishes transport semantics; the complete engine protocol is
+the next phase-1 deliverable.
+
+Run the transport tests:
+
+```bash
+uv run --with aiohttp python -m unittest discover -s tests -v
+```
 
 ## References
 
