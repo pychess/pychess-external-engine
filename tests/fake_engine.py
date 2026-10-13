@@ -13,6 +13,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", default="normal")
     parser.add_argument("--log")
+    parser.add_argument("--alice", action="store_true")
     args = parser.parse_args()
     loaded = False
     searches = 0
@@ -36,8 +37,12 @@ def main() -> None:
                 print("option name VariantPath type string default <empty>", flush=True)
                 variants = " var custom-variant" if loaded else ""
                 print(
-                    "option name UCI_Variant type combo default chess var chess var shogi"
-                    + variants,
+                    (
+                        "option name UCI_Variant type combo default alice var alice"
+                        if args.alice
+                        else "option name UCI_Variant type combo default chess var chess var shogi"
+                        + variants
+                    ),
                     flush=True,
                 )
             print("uciok", flush=True)

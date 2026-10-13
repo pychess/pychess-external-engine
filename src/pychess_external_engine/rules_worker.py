@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
+import importlib
 import json
 import re
 import sys
 from collections import Counter
 
-import pyffish
-
 from .protocol import MAX_BODY_BYTES, MAX_PV_MOVES, VARIANT_RE, ProtocolError, SearchRequest
 from .rule_keys import RULE_KEYS
+
+pyffish = importlib.import_module("pyffish_alice" if "--alice" in sys.argv else "pyffish")
+ALICE = "--alice" in sys.argv
 
 HIDDEN_VARIANTS = frozenset(("fogofwar", "jieqi"))
 
@@ -169,8 +171,59 @@ def has_gating(request: SearchRequest) -> bool:
     return False
 
 
+def admit_alice_fen(fen: str) -> None:
+    """Accept Pychess's compact two-layer FEN before touching the native library."""
+    fields = fen.split()
+    ranks = fields[0].split("/")
+    if (
+        len(fields) != 6
+        or len(ranks) != 8
+        or fields[3] != "-"
+        or fields[1] not in ("w", "b")
+        or any(
+            re.fullmatch(r"(?:[1-8]|\|?[pnbrqkPNBRQK])+", rank) is None or width(rank) != 8
+            for rank in ranks
+        )
+        or any(not value.isascii() or not value.isdigit() or len(value) > 9 for value in fields[4:])
+        or int(fields[5]) < 1
+        or re.fullmatch(r"-|K?Q?k?q?", fields[2]) is None
+    ):
+        raise ProtocolError("invalid_position", "Invalid compact Alice FEN", 422)
+    pieces = Counter(char for char in fields[0] if char.isalpha())
+    if (
+        pieces["K"] != 1
+        or pieces["k"] != 1
+        or any(char in "pP" for rank in (ranks[0], ranks[-1]) for char in rank)
+    ):
+        raise ProtocolError("invalid_position", "Invalid Alice material", 422)
+    for roles in ("PNBRQK", "pnbrqk"):
+        pawn, knight, bishop, rook, queen, _king = roles
+        surplus = sum(
+            max(0, pieces[role] - base)
+            for role, base in ((knight, 2), (bishop, 2), (rook, 2), (queen, 1))
+        )
+        if (
+            sum(pieces[role] for role in roles) > 16
+            or pieces[pawn] > 8
+            or surplus > 8 - pieces[pawn]
+        ):
+            raise ProtocolError("invalid_position", "Alice material exceeds engine limits", 422)
+
+
 def validate_position(request: SearchRequest) -> bool:
     variant = request.engine_variant
+    if ALICE:
+        if (
+            request.variant != "alice"
+            or variant != "alice"
+            or request.rules is not None
+            or request.chess960
+        ):
+            raise ProtocolError("unsupported_variant", "Alice supports only its fixed rules", 422)
+        admit_alice_fen(request.initial_fen)
+        admit_alice_fen(request.current_fen)
+    elif request.variant == "alice" or variant == "alice":
+        raise ProtocolError("unsupported_variant", "Configure the optional Alice adapter", 422)
     if request.variant in HIDDEN_VARIANTS or variant in HIDDEN_VARIANTS:
         raise ProtocolError(
             "hidden_information", "Hidden-information analysis needs a dedicated adapter", 422
@@ -263,7 +316,13 @@ def main() -> None:
                     "variants": [
                         v
                         for v in pyffish.variants()
-                        if not pyffish.two_boards(v) and v not in HIDDEN_VARIANTS
+                        if (
+                            v == "alice"
+                            if ALICE
+                            else not pyffish.two_boards(v)
+                            and v not in HIDDEN_VARIANTS
+                            and v != "alice"
+                        )
                     ],
                     "version": list(pyffish.version()),
                 }

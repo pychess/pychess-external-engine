@@ -78,6 +78,11 @@ async def check(args: argparse.Namespace) -> dict[str, object]:
         token = secrets.token_urlsafe(32)
         app = create_app(
             EngineConfig(command=(args.engine,), options=tuple(tuple(o) for o in args.setoption)),
+            alice_config=EngineConfig(
+                command=(args.alice_engine,), options=tuple(tuple(o) for o in args.alice_setoption)
+            )
+            if args.alice_engine
+            else None,
             token=token,
             origins=(origin,),
             authority="",
@@ -109,7 +114,7 @@ async def check(args: argparse.Namespace) -> dict[str, object]:
                 await context.route(origin + "/**", serve_checkout)
                 await context.add_init_script("localStorage.setItem('infiniteAnalysis', 'true')")
                 if args.without_wasm:
-                    await context.route("**/static/stockfish.js", lambda route: route.abort())
+                    await context.route("**/static/stockfish*.js", lambda route: route.abort())
                 page = await context.new_page()
                 page_errors: list[str] = []
                 page.on("pageerror", lambda error: page_errors.append(str(error).splitlines()[0]))
@@ -129,10 +134,11 @@ async def check(args: argparse.Namespace) -> dict[str, object]:
                 await page.locator("#external-engine-token").fill(token)
                 await page.locator("#external-engine-connect").click()
                 await page.wait_for_function(
-                    "document.querySelector('#analysis-engine-name').textContent"
-                    ".includes('Fairy-Stockfish') && "
+                    "name => document.querySelector('#analysis-engine-name').textContent"
+                    ".includes(name) && "
                     "document.querySelector('.nnue').textContent === 'NATIVE' && "
                     "!document.querySelector('#engine-enabled').disabled",
+                    arg="Alice-Stockfish" if args.variant == "alice" else "Fairy-Stockfish",
                     timeout=60000 if args.headed else 15000,
                 )
                 report["pairing"] = "passed"
@@ -265,6 +271,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pychess", default="../pychess-variants")
     parser.add_argument("--engine", required=True)
+    parser.add_argument("--alice-engine")
+    parser.add_argument("--alice-setoption", nargs=2, action="append", default=[])
     parser.add_argument(
         "--setoption", nargs=2, action="append", default=[], metavar=("NAME", "VALUE")
     )

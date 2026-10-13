@@ -120,3 +120,18 @@ Initial production bounds, exposed in capabilities and adjustable downwards loca
 
 The transport prototype uses a smaller 64 KiB body cap and a 30-second fake-stream
 ceiling. Engine-specific bounds and validation are implemented and tested in phase 2.
+
+## Optional Alice adapter
+
+When configured and qualified, `engine.variants` includes `alice`, and
+`engine.adapters.alice` contains its own engine name, resource ceilings and variant
+list (`["alice"]`). Its `chess960` and `customRules` flags are both false.
+`rules.aliceVersion` records the optional rules library version. Clients must use
+these adapter capabilities for Alice rather than infer support from the primary
+engine's custom-rule flag. An ordinary bridge omits this adapter.
+
+Alice requests require both `variant` and `engineVariant` to be `alice`,
+`chess960: false`, no `rules` payload, and Pychess compact FEN. A `|` before a piece
+marks its layer; coordinate moves stay unchanged. Both FENs and the complete history
+are checked with the isolated Alice library. One owner covers both adapters, and
+switching closes the previous native engine before launching the next.

@@ -25,7 +25,7 @@ from .config import EngineConfig
 from .protocol import MAX_BODY_BYTES, ProtocolError, SearchRequest
 from .rules import RulesWorker
 from .search import SearchController
-from .uci import EngineError
+from .uci import EngineError, UciEngine
 
 
 @dataclass
@@ -53,11 +53,72 @@ async def lifecycle(app: web.Application) -> AsyncIterator[None]:
         rules = await worker.capabilities()
         engine = state.controller.engine.capabilities()
         engine["variants"] = [v for v in state.controller.engine.variants if v in rules["variants"]]
+        alice_config = state.controller.alice_config
+        if alice_config is not None:
+            # Discover sequentially; the bridge owns at most one native engine process.
+            await state.controller.engine.close(force=True)
+            alice_engine = UciEngine(alice_config)
+            alice_worker = RulesWorker(alice=True)
+            try:
+                await alice_engine.open()
+                alice_rules = await alice_worker.capabilities()
+                if "alice" not in alice_engine.variants or "alice" not in alice_rules["variants"]:
+                    raise EngineError(
+                        "unsupported_variant", "The Alice adapter must advertise alice"
+                    )
+                state.controller.engine = alice_engine
+                qualification = SearchRequest.parse(
+                    {
+                        "protocolVersion": 1,
+                        "sessionId": "qualification",
+                        "searchId": "alice",
+                        "variant": "alice",
+                        "engineVariant": "alice",
+                        "chess960": False,
+                        "initialFen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+                        "currentFen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+                        "moves": [],
+                        "threads": 1,
+                        "hash": 16,
+                        "multiPv": 1,
+                        "search": {"depth": 1},
+                    }
+                )
+                completed = False
+                async with asyncio.timeout(alice_config.handshake_timeout):
+                    await state.controller.begin(qualification)
+                    async for event in state.controller.events(qualification):
+                        if event["type"] == "error":
+                            raise EngineError(
+                                "alice_qualification", "Alice search qualification failed"
+                            )
+                        if event["type"] == "completed" and event.get("bestmove"):
+                            completed = True
+                if not completed:
+                    raise EngineError(
+                        "alice_qualification", "Alice did not return a legal best move"
+                    )
+                alice_caps = alice_engine.capabilities()
+                alice_caps.update(variants=["alice"], chess960=False, customRules=False)
+                engine["adapters"] = {"alice": alice_caps}
+                engine["variants"].append("alice")
+                rules["aliceVersion"] = alice_rules["version"]
+            except TimeoutError:
+                raise EngineError(
+                    "alice_qualification", "Alice search qualification timed out"
+                ) from None
+            finally:
+                if state.controller.active is not None:
+                    await state.controller.finish(state.controller.active)
+                await alice_engine.close(force=True)
+                await alice_worker.close()
+                state.controller.engine = UciEngine(state.controller.config)
+            await state.controller.engine.open()
         state.capabilities = {
             "protocolVersion": 1,
             "scorePov": "sideToMove",
             "engine": engine,
-            "rules": {"version": rules["version"]},
+            "rules": {key: value for key, value in rules.items() if key.endswith("ersion")},
             "limits": {
                 "maxBodyBytes": MAX_BODY_BYTES,
                 "maxSearchSeconds": state.controller.config.max_search_seconds,
@@ -149,6 +210,7 @@ def create_app(
     token: str,
     origins: tuple[str, ...] = DEFAULT_ORIGINS,
     authority: str = f"127.0.0.1:{DEFAULT_PORT}",
+    alice_config: EngineConfig | None = None,
 ) -> web.Application:
     validate_token(token)
     app = web.Application(middlewares=[access], client_max_size=MAX_BODY_BYTES)
@@ -156,7 +218,7 @@ def create_app(
         token,
         frozenset(validate_origin(origin) for origin in origins),
         authority,
-        SearchController(config, RulesWorker),
+        SearchController(config, RulesWorker, alice_config, lambda: RulesWorker(alice=True)),
     )
     state.idle.set()
     app[STATE] = state

@@ -21,7 +21,8 @@ Application source is licensed under AGPL-3.0-or-later; see [LICENSE](LICENSE).
 The included license text is the standard GNU AGPL v3 text also used by Pychess.
 
 The rules dependency [pyffish](https://github.com/fairy-stockfish/Fairy-Stockfish)
-is provided by Fairy-Stockfish under its own GPL license. Native engine executables
+and the optional `pyffish-alice` rules library are provided by Fairy-Stockfish
+under their own GPL licenses. Native engine executables
 and networks are configured by the user and are not bundled with this package.
 Preserve notices and fulfill upstream source/license obligations when adapting code
 or distributing dependencies or engine binaries.

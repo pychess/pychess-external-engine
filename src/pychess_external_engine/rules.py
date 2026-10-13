@@ -16,6 +16,7 @@ from .uci import EngineError
 class RulesWorker:
     timeout: float = 10
     command: tuple[str, ...] = (sys.executable, "-m", "pychess_external_engine.rules_worker")
+    alice: bool = False
     process: asyncio.subprocess.Process | None = None
 
     async def exchange(self, message: dict[str, object]) -> dict[str, Any]:
@@ -23,6 +24,7 @@ class RulesWorker:
             try:
                 self.process = await asyncio.create_subprocess_exec(
                     *self.command,
+                    *(("--alice",) if self.alice else ()),
                     stdin=asyncio.subprocess.PIPE,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.DEVNULL,

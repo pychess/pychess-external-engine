@@ -90,3 +90,12 @@ pairing token and failed checks exit nonzero. The application closes with the te
 Automated permission overrides are test infrastructure, not a production strategy.
 The actual UI must ask users to connect, let browsers enforce permissions, and explain
 denial or an unavailable bridge without repeatedly prompting.
+
+## Alice adapter UI
+
+[The Edge Alice report](results/edge-ui-alice-linux-2026-10-13.json) verifies native
+NNUE evaluations, PV navigation, competing tabs, tab-close cleanup, reconnect,
+forget and permission denial with browser search deliberately blocked. It uses
+Alice-Stockfish 1.0, its legacy Alice_v1.nnue network and pyffish-alice 0.0.3.
+The native HTTP tests additionally switch Alice → Chess → Alice, verify legal PVs
+from a Black-to-move looking-glass position, and check shared ownership/cancellation.

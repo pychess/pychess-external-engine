@@ -31,8 +31,9 @@ the search; `pyffish` validates positions, histories, and principal variations.
 
 The first implementation step is to prove HTTPS-to-loopback streaming and cancellation
 in supported browsers. Ordinary single-board Fairy-Stockfish analysis comes first,
-with exact custom rules included in the protocol design. Alice, two-board analysis,
-hidden-information variants, and USI/UCCI adapters need separate capability checks.
+with exact custom rules included. Alice has an optional dedicated engine/rules
+adapter. Two-board analysis, hidden-information variants, and USI/UCCI adapters
+remain deferred.
 
 ## Development installation and engine discovery
 
@@ -110,6 +111,45 @@ computer permissions with a temporary Study database:
 uv run python -m tools.study_probe --browser edge --pychess ../pychess-variants \
   --engine /path/to/fairy-stockfish --setoption 'Use NNUE' false
 ```
+
+## Optional Alice engine
+
+Install the optional rules library and configure a separate Alice-capable UCI engine:
+
+```bash
+uv sync --extra dev --extra alice
+uv run pychess-external-engine --engine /path/to/fairy-stockfish \
+  --setoption 'Use NNUE' false --alice-engine /path/to/alice-stockfish \
+  --alice-setoption EvalFile /path/to/Alice_v1.nnue
+```
+
+Alice options and executable arguments use `--alice-setoption` and `--alice-engine-arg`.
+They stay on the local computer. Startup requires the Alice rules library, an engine
+advertising `alice`, and a shallow search returning a legal best move. A missing or
+incompatible Alice configuration stops startup with an error; omit Alice options to
+run the ordinary engine alone. The bridge closes the previous native process before
+switching engines, with one search owner shared across all variants and tabs.
+
+Alice uses fixed rules, compact FEN with `|` before looking-glass-board pieces, and
+ordinary coordinate move tokens. The adapter validates full move histories and PVs
+with pinned `pyffish-alice` 0.0.3. Alice custom definitions, legacy 16-wide FEN input,
+and Alice Chess960 are outside this adapter's capability. NNUE files must match the
+chosen Alice engine. The tested Alice-Stockfish 1.0 binary uses `Alice_v1.nnue` in
+Legacy evaluation mode; disabling its NNUE selects zero diagnostic evaluation,
+which is useful for lifecycle tests but not meaningful positional evaluation.
+
+To repeat the integrated Edge check:
+
+```bash
+uv run python -m tools.ui_probe --browser edge --variant alice --without-wasm \
+  --engine /path/to/fairy-stockfish --setoption 'Use NNUE' false \
+  --alice-engine /path/to/alice-stockfish \
+  --alice-setoption EvalFile /path/to/Alice_v1.nnue
+```
+
+For native unit checks, add `PYCHESS_TEST_ALICE_ENGINE` and optionally
+`PYCHESS_TEST_ALICE_NETWORK` alongside `PYCHESS_TEST_ENGINE`. Without the network
+variable, Alice tests use zero diagnostic evaluation.
 
 Development checks:
 
