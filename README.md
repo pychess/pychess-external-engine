@@ -102,7 +102,9 @@ routing; it does not modify the deployed website or disable browser security.
 It checks native PV navigation, competing tabs, tab closure, reconnect, forget,
 permission denial, and mobile/desktop light/dark settings. Use `--variant orda`
 for exact site rules or `--variant cwda --without-wasm` to verify independence from
-browser search. See [browser compatibility](docs/browser-compatibility.md) for evidence.
+browser search. Add `--restart-bridge` to verify shutdown, token rotation and re-pairing.
+Use `--variant alice --expect-unsupported` without an Alice engine to verify
+capability rejection in the UI. See [browser compatibility](docs/browser-compatibility.md) for evidence.
 
 Verify Study chapter changes, historical rules snapshots, Practice ownership, and
 computer permissions with a temporary Study database:

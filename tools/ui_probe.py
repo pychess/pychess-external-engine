@@ -10,7 +10,7 @@ import platform
 import secrets
 import shutil
 from pathlib import Path
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 
 from aiohttp import web
 from playwright.async_api import ViewportSize, async_playwright
@@ -87,7 +87,9 @@ async def check(args: argparse.Namespace) -> dict[str, object]:
             origins=(origin,),
             authority="",
         )
-        bridge = web.AppRunner(app, access_log=None, handler_cancellation=True)
+        bridge = web.AppRunner(
+            app, access_log=None, handler_cancellation=True, shutdown_timeout=0.2
+        )
         await bridge.setup()
         await web.TCPSite(bridge, "127.0.0.1", 0).start()
         address = f"http://127.0.0.1:{bridge.addresses[0][1]}"
@@ -133,6 +135,17 @@ async def check(args: argparse.Namespace) -> dict[str, object]:
                 await page.locator("#external-engine-address").fill(address)
                 await page.locator("#external-engine-token").fill(token)
                 await page.locator("#external-engine-connect").click()
+                if args.expect_unsupported:
+                    await page.wait_for_function(
+                        "document.querySelector('#external-engine-status').textContent"
+                        ".includes('cannot analyse this variant') && "
+                        "document.querySelector('#engine-enabled').disabled"
+                    )
+                    if app[STATE].started or app[STATE].active is not None:
+                        raise AssertionError("Unsupported analysis acquired native work")
+                    report["unsupportedVariantDisabled"] = "passed"
+                    report["result"] = "passed"
+                    return report
                 await page.wait_for_function(
                     "name => document.querySelector('#analysis-engine-name').textContent"
                     ".includes(name) && "
@@ -224,6 +237,60 @@ async def check(args: argparse.Namespace) -> dict[str, object]:
                     timeout=15000,
                 )
                 report["reconnect"] = "passed"
+                if args.restart_bridge:
+                    old_search = app[STATE].controller.active
+                    assert old_search is not None
+                    old_process = app[STATE].controller.engine.process
+                    old_released = app[STATE].released
+                    await bridge.cleanup()
+                    assert old_process is not None and old_process.returncode is not None
+                    await other.wait_for_function(
+                        "document.querySelector('#external-engine-status').textContent"
+                        ".includes('failed') || "
+                        "document.querySelector('#external-engine-status').textContent.includes('Unable')"
+                    )
+                    report["bridgeStop"] = "passed"
+                    token = secrets.token_urlsafe(32)
+                    app = create_app(
+                        EngineConfig(
+                            command=(args.engine,), options=tuple(tuple(o) for o in args.setoption)
+                        ),
+                        alice_config=EngineConfig(
+                            command=(args.alice_engine,),
+                            options=tuple(tuple(o) for o in args.alice_setoption),
+                        )
+                        if args.alice_engine
+                        else None,
+                        token=token,
+                        origins=(origin,),
+                        authority=urlsplit(address).netloc,
+                    )
+                    bridge = web.AppRunner(
+                        app, access_log=None, handler_cancellation=True, shutdown_timeout=0.2
+                    )
+                    await bridge.setup()
+                    await web.TCPSite(bridge, "127.0.0.1", urlsplit(address).port).start()
+                    await other.locator("#bars").click()
+                    await other.locator("#external-engine-connect").click()
+                    await other.wait_for_function(
+                        "document.querySelector('#external-engine-status').textContent"
+                        ".includes('current pairing token')"
+                    )
+                    if app[STATE].started:
+                        raise AssertionError("An expired token acquired the restarted engine")
+                    report["rotatedTokenRejectsOldPairing"] = "passed"
+                    await other.locator("#external-engine-token").fill(token)
+                    await other.locator("#external-engine-connect").click()
+                    await other.locator("#bars").click()
+                    await other.wait_for_function(
+                        "document.querySelector('info#info').textContent.includes('Depth') && "
+                        "document.querySelector('.pvbox pv-san')"
+                    )
+                    active = app[STATE].controller.active
+                    if active is None or active.search_id == old_search.search_id:
+                        raise AssertionError("Reconnect did not acquire a fresh search")
+                    report["restartReconnection"] = "passed"
+                    report["releasedBeforeRestart"] = old_released
                 await other.locator("#bars").click()
                 await other.locator("#external-engine-forget").click()
                 await other.wait_for_function(
@@ -281,6 +348,8 @@ def main() -> None:
     parser.add_argument("--fen", help="Start the test at this explicit variant FEN")
     parser.add_argument("--headed", action="store_true")
     parser.add_argument("--without-wasm", action="store_true")
+    parser.add_argument("--restart-bridge", action="store_true")
+    parser.add_argument("--expect-unsupported", action="store_true")
     parser.add_argument("--output")
     args = parser.parse_args()
     report = asyncio.run(check(args))

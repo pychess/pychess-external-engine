@@ -26,9 +26,11 @@ No Pychess header changes have been needed for the passing Chromium transport pr
 | Microsoft Edge 155.0.4283.45 | Linux x86_64 | All automated transport and allow/deny checks passed | Real user prompt and later WASM/native-engine UI checks |
 | Safari | — | Not tested | Real Safari/macOS check; Linux WebKit is not Safari |
 
-The first-release browser matrix remains open. HTTP loopback is proven for Chromium,
-Edge, and Firefox on this Linux machine, but universal browser support has not been
-established. The Firefox result was supplied by the user from the headed probe;
+The initial verified browser matrix is Chromium 154 and Edge 155 on Linux x86_64.
+Firefox 155 is experimental: its transport prototype passed, while native UI and
+denial remain unverified. Safari and Linux WebKit are outside supported coverage.
+HTTP loopback is proven for Chromium, Edge, and Firefox on this Linux machine,
+but universal browser support has not been established. The Firefox result was supplied by the user from the headed probe;
 see [the recorded report](results/firefox-linux-2026-10-13.json). If Safari also blocks this transport, evaluate
 explicit local TLS with a trusted certificate or the planned extension/native-messaging
 adapter before adding it to the supported matrix. Neither fallback is implemented.
@@ -57,7 +59,7 @@ and browser-only NNUE-control visibility verified through computed styles.
 Reports: [Edge Chess](results/edge-ui-chess-linux-2026-10-13.json),
 [Edge Orda](results/edge-ui-orda-linux-2026-10-13.json), and
 [Chromium CWDA](results/chromium-ui-cwda-linux-2026-10-13.json).
-Wider variants, bridge restarts and Firefox UI remain open.
+Firefox native UI and other operating systems remain unverified.
 
 [The Edge Study report](results/edge-study-linux-2026-10-13.json) verifies real
 chapter transitions between Chess, Orda and two historical custom-rule snapshots.
@@ -99,3 +101,15 @@ forget and permission denial with browser search deliberately blocked. It uses
 Alice-Stockfish 1.0, its legacy Alice_v1.nnue network and pyffish-alice 0.0.3.
 The native HTTP tests additionally switch Alice → Chess → Alice, verify legal PVs
 from a Black-to-move looking-glass position, and check shared ownership/cancellation.
+
+## Bridge restart and unavailable adapter
+
+[The Edge restart report](results/edge-ui-restart-linux-2026-10-13.json) verifies
+native process release on bridge shutdown, a visible connection failure, rejection
+of the expired pairing token after restart, and a fresh search after entering the
+new token. Run `tools.ui_probe --restart-bridge` with the ordinary engine.
+
+[The unsupported-adapter report](results/edge-ui-unsupported-linux-2026-10-13.json)
+verifies that an ordinary bridge can pair on the Alice page while leaving the engine
+switch disabled and acquiring no native work. Run `tools.ui_probe --variant alice
+--expect-unsupported` without Alice configuration.
