@@ -321,18 +321,39 @@ async def check(args: argparse.Namespace) -> dict[str, object]:
                     "document.querySelector('info#info').textContent.includes('Depth')"
                 )
                 report["sourceSwitching"] = "passed"
+                report["phase"] = "competing tab"
                 await page.locator("#bars").click()
                 other = await context.new_page()
                 await other.goto(url, wait_until="domcontentloaded")
-                await other.wait_for_function(
-                    "document.querySelector('#external-engine-status')?.textContent"
-                    ".includes('Another tab')",
-                    timeout=15000,
-                )
+                try:
+                    await other.wait_for_function(
+                        "document.querySelector('#external-engine-status')?.textContent"
+                        ".includes('Another tab')",
+                        timeout=15000,
+                    )
+                except Exception:
+                    report["competingTabDiagnostics"] = {
+                        "firstTab": await page.evaluate("""() => ({
+                            source: document.querySelector('#analysis-engine-source')?.value,
+                            status: document.querySelector('#external-engine-status')?.textContent,
+                            evaluation: document.querySelector('info#info')?.textContent,
+                        })"""),
+                        "secondTab": await other.evaluate("""() => ({
+                            source: document.querySelector('#analysis-engine-source')?.value,
+                            status: document.querySelector('#external-engine-status')?.textContent,
+                            statusHidden: document.querySelector('#external-engine-status')?.hidden,
+                            evaluation: document.querySelector('info#info')?.textContent,
+                            retryHidden: document.querySelector('#external-engine-retry')?.hidden,
+                        })"""),
+                        "nativeActive": app[STATE].controller.active is not None,
+                    }
+                    raise
                 report["competingTab"] = "passed"
+                report["phase"] = "tab-close cleanup"
                 await page.close()
                 await asyncio.wait_for(app[STATE].idle.wait(), 3)
                 report["tabCloseCleanup"] = "passed"
+                report["phase"] = "reconnect after closing tab"
                 await other.locator("#bars").click()
                 await other.locator("#external-engine-retry").click()
                 await other.locator("#bars").click()
@@ -341,6 +362,7 @@ async def check(args: argparse.Namespace) -> dict[str, object]:
                     timeout=15000,
                 )
                 report["reconnect"] = "passed"
+                report["phase"] = "optional bridge restart"
                 if args.restart_bridge:
                     old_search = app[STATE].controller.active
                     assert old_search is not None
@@ -398,6 +420,7 @@ async def check(args: argparse.Namespace) -> dict[str, object]:
                         raise AssertionError("Reconnect did not acquire a fresh search")
                     report["restartReconnection"] = "passed"
                     report["releasedBeforeRestart"] = old_released
+                report["phase"] = "forget engine"
                 await other.locator("#bars").click()
                 await other.locator("#external-engine-forget").click()
                 await other.wait_for_function(
