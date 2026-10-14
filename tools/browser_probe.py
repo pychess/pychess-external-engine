@@ -116,7 +116,8 @@ async def check_browser(
         # Every browser request is intercepted; unexpected URLs fail closed.
         if route.request.url == site:
             await route.fulfill(
-                status=200, content_type="text/html",
+                status=200,
+                content_type="text/html",
                 headers={
                     "Cross-Origin-Opener-Policy": "same-origin",
                     "Cross-Origin-Embedder-Policy": "require-corp",

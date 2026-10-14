@@ -127,7 +127,9 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--site", required=True, help="Non-production HTTPS fixture with COOP/COEP headers")
+    parser.add_argument(
+        "--site", required=True, help="Non-production HTTPS fixture with COOP/COEP headers"
+    )
     args = parser.parse_args()
     try:
         result = asyncio.run(check(args.site))
