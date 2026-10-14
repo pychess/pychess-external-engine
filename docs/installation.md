@@ -1,7 +1,8 @@
 # Install and use the local engine app
 
-The published alpha is `0.1.0a1`. Connection controls require Pychess's external-engine
-frontend integration.
+The published alpha is `0.1.0a1` and uses the previous manual connection flow.
+Account-token registration in this checkout is unreleased and requires the matching
+Pychess frontend/server changes. The instructions below describe that new flow.
 
 ## Requirements
 
@@ -21,17 +22,27 @@ itself contains Python code; native engines and networks are not bundled.
 ## Recommended: uvx
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then launch the
-versioned alpha with your native engine:
+source checkout with your own compatible UCI engine and an account engine token:
 
 ```bash
-uvx --python 3.13 pychess-external-engine@0.1.0a1 \
-  --engine /absolute/path/to/fairy-stockfish --setoption 'Use NNUE' false
+uvx --python 3.13 --from . pychess-external-engine \
+  --engine /absolute/path/to/your-uci-engine --token-file /absolute/path/to/your-token
 ```
 
-uv manages Python and the isolated dependencies; there is no project checkout or
-manual virtualenv setup. Both rules libraries are required dependencies. uv can
+uv manages Python and the isolated dependencies. Until this flow is released,
+run from this source checkout. Both rules libraries are required dependencies. uv can
 download a matching Python when missing. Engines and networks are not downloaded
-by this release. Keep the terminal running, pair the browser, and stop with Ctrl+C.
+by this package. Keep the terminal running, select the engine in analysis settings,
+and stop with Ctrl+C. Fairy-Stockfish and Alice-Stockfish below are tested examples;
+users choose and supply their own compatible UCI executables and networks.
+
+## Account token
+
+Sign in to Pychess and open **Account → External engines** (`/account/engines`).
+Create a token for this local installation and copy it once into a local file.
+Pass that file using `--token-file`, or set `PYCHESS_API_TOKEN` in the app's environment.
+Use a separate token for each installation. Engine tokens permit registration and
+discovery without BOT gameplay access; no account upgrade is needed.
 
 ## Install from this source checkout
 
@@ -58,7 +69,7 @@ Make the native executable runnable and choose absolute paths. First inspect its
 advertised capabilities:
 
 ```bash
-uvx --python 3.13 pychess-external-engine@0.1.0a1 \
+uv run pychess-external-engine \
   --engine /absolute/path/to/fairy-stockfish \
   --setoption 'Use NNUE' false --check-engine
 ```
@@ -66,15 +77,16 @@ uvx --python 3.13 pychess-external-engine@0.1.0a1 \
 Then start the bridge:
 
 ```bash
-uvx --python 3.13 pychess-external-engine@0.1.0a1 \
+uv run pychess-external-engine \
   --engine /absolute/path/to/fairy-stockfish \
-  --setoption 'Use NNUE' false --max-threads 4 --max-hash 256
+  --setoption 'Use NNUE' false --max-threads 4 --max-hash 256 \
+  --token-file /absolute/path/to/your-token
 ```
 
-The terminal prints `http://127.0.0.1:9670` and a temporary pairing token. Leave the
-application running while analysing. Engine discovery happens before the HTTP
-service becomes ready. Stop it with Ctrl+C; active searches and native/rules
-subprocesses are released. Restarting rotates the token.
+The terminal reports that the engine is registered with Pychess. Leave the application
+running while analysing. Native discovery and loopback binding precede registration.
+Stop it with Ctrl+C; active searches and subprocesses are released and the registration
+is removed. Restarting refreshes the registration automatically.
 
 Fairy-Stockfish can search ordinary supported variants without NNUE. To use a
 compatible network, configure the engine's advertised network option locally, for
@@ -88,13 +100,15 @@ Configuration switches:
 | Switch | Meaning |
 | --- | --- |
 | `--engine`, repeated `--engine-arg` | Local executable and its argument array; no shell invocation |
+| `--token-file` or `PYCHESS_API_TOKEN` | Engine-scoped account token used only for website registration |
+| `--site` | Pychess website origin; defaults to `https://www.pychess.org`; HTTP loopback is allowed for development |
 | Repeated `--setoption NAME VALUE` | Locally configured, advertised engine options |
 | `--max-threads` | CPU thread ceiling; defaults to detected CPU count |
 | `--max-hash` | Hash ceiling in MiB; defaults to 512 |
 | `--max-search-seconds` | Search wall-clock ceiling; defaults to 900 seconds |
 | `--idle-seconds` | Idle native-process lifetime; defaults to 300 seconds; a later search relaunches it |
 | `--port` | Loopback HTTP port; defaults to 9670 |
-| Repeated `--allow-origin` | Exact permitted HTTP(S) origin; overrides the default `https://www.pychess.org` / `https://pychess.org` list |
+| Repeated `--allow-origin` | Extra exact allowed frontend origins; the configured site is always allowed |
 | `--check-engine` | Discover configured engine options/capabilities and exit |
 
 Threads, Hash, MultiPV, UCI_Variant, UCI_Chess960 and UCI_AnalyseMode are managed by
@@ -105,20 +119,22 @@ the bridge at a time, even when an optional Alice engine is configured.
 
 For development, add the actual frontend origin, for example
 `--allow-origin http://localhost:8080`. A scheme, host or port difference creates a
-different origin. The local app binds to IPv4 loopback; use `127.0.0.1` in the pairing
-address. LAN addresses and remote engines are outside this implementation.
+different origin. The local app binds to IPv4 loopback. LAN addresses and remote
+engines are outside this implementation. Use `--site http://localhost:8080` when
+registering with a local development website.
 
 ## Pair and analyse
 
-1. Open an analysis page in the updated Pychess frontend and open engine settings.
-2. Select the external engine source, enter the local address and token, and click Connect.
+1. Start the app with your own engine and account token, then sign in to Pychess.
+2. Open analysis engine settings and select your registered engine by name.
 3. Grant local-network/device-service permission if the browser asks.
 4. Enable analysis using the normal engine switch; moves and tree navigation replace the current search.
-5. Use Disconnect to return to browser analysis. Forget also removes the saved token.
+5. Select the browser engine to switch back. The remove button deletes the registration.
 
-Connection details are stored in this browser's local Pychess-origin preferences.
-They are not sent to Heroku or synchronized through your Pychess account. A reload
-restores a connection only after permitted access; otherwise click Connect. A second
+Only the selected engine ID and source are stored in browser preferences. The website
+stores an expiring, owner-only registration with a separate local connection credential;
+the account token stays in the local app. Search traffic goes directly to loopback.
+A reload restores a connection only after permitted access; otherwise select your engine. A second
 tab receives an engine-busy message and cannot replace the first tab's search.
 Stop analysis or close the owner tab before retrying in another tab.
 
@@ -145,10 +161,11 @@ can limit a newer native engine's custom features.
 Alice rules are included automatically. Configure a separate Alice engine:
 
 ```bash
-uvx --python 3.13 pychess-external-engine@0.1.0a1 \
+uv run pychess-external-engine \
   --engine /absolute/path/to/fairy-stockfish \
   --setoption 'Use NNUE' false --alice-engine /absolute/path/to/alice-stockfish \
-  --alice-setoption EvalFile /absolute/path/to/Alice_v1.nnue
+  --alice-setoption EvalFile /absolute/path/to/Alice_v1.nnue \
+  --token-file /absolute/path/to/your-token
 ```
 
 Use repeated `--alice-engine-arg` and `--alice-setoption` for its local configuration.
@@ -164,14 +181,15 @@ meaningful positional analysis.
 | Symptom | Action |
 | --- | --- |
 | Unable to connect | Start the app, wait for its HTTP startup banner, check the IPv4 address/port, and allow local network access for the page origin |
-| Current pairing token requested | Copy the token from the current app instance; restarting invalidates the previous token |
-| Another tab is using the engine | Stop analysis in that tab or close it, then retry Connect; there is no job queue |
+| Engine not listed | Sign in with the token's owner account, start the app, wait for registration, then reload the page |
+| Invalid or revoked account token | Create an engine token in account settings and update the local token file/environment |
+| Another tab is using the engine | Stop analysis in that tab or close it, then Retry; there is no job queue |
 | Cannot analyse this variant | Check the actual native/rules capabilities; install/configure Alice separately when needed |
 | Variant definition rejected | Use compatible engine/rules versions and the exact saved definition; unsupported keys require a newer verified rules adapter |
 | Analysis fails after pairing | Check executable/network options locally, then reconnect; hung/crashed engines are stopped and ownership is released |
 | Browser controls absent | Use the updated Pychess frontend; this local package does not deploy website changes |
-| Port already in use | Stop the old app or choose another `--port`, then update the pairing address |
-| Permission denied | Change the browser's site permission and click Connect; the application does not repeatedly prompt |
+| Port already in use | Stop the old app or choose another `--port`; registration uses the configured port automatically |
+| Permission denied | Change the browser's site permission and select the engine again or Retry; the app does not repeatedly prompt |
 | Safari/WebKit cannot connect | This release does not support them; a trusted local-TLS or extension fallback remains future work |
 
 For development and repeatable checks, see [development.md](development.md). Preserve upstream licenses when distributing

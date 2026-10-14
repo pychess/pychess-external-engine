@@ -28,9 +28,14 @@ AGENTS.md/testing policy.
   hosted Pychess process is needed.
 - Bind to IPv4 loopback, validate exact Host/Origin, require pairing for engine
   operations and preserve browser local-network permissions. Keep tokens out of
-  URLs, reports, PGNs and website/server requests.
+  URLs, reports and PGNs. Account API tokens stay in local configuration and are
+  sent only to the configured website's registration API. The separate loopback
+  credential is stored in an expiring, owner-only website registration and page
+  memory; never expose it in public data or browser preferences.
 - Executables, arguments, network paths and engine options come from local
   configuration. Browser requests cannot choose commands or local files.
+  Users choose and supply their own compatible UCI engines; do not require,
+  bundle or download Fairy-Stockfish or Alice-Stockfish as analysis executables.
 - One search owns the bridge across all variants and tabs. Stop/drain through
   bestmove before replacement; bound time/output, reap subprocesses on failure,
   and retain request identity checks through asynchronous cleanup.

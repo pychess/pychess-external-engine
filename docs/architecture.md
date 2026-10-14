@@ -4,7 +4,8 @@ Pychess External Engine combines loopback HTTP, rules validation and UCI subproc
 management in one application on the user's computer. The native engine searches;
 `pyffish` and `pyffish-alice` validate positions, histories and principal variations.
 Pychess serves the frontend through its existing application. Evaluations stream
-directly to the browser, requiring no extra hosted server or account API token.
+directly to the browser, requiring no extra hosted server. An engine-scoped account
+token registers connection metadata with the existing Pychess website.
 
 ```text
 Pychess website -> browser analysis controller
@@ -33,7 +34,18 @@ See [protocol.md](protocol.md) for the HTTP contract and
 
 The browser supplies position/history, exact rule definitions and bounded resource
 requests. Only local configuration chooses executable arguments, files and networks.
-Both HTTP routes require pairing and an allowed origin. Tokens rotate per app start.
+Both HTTP routes require a local bearer credential and an allowed origin. That
+credential rotates per app start and is published only to the owner's account
+registration. The account API token is separate and never sent to browser analysis;
+the account creation page shows it once so the user can configure the local app.
+
+`registration.py` sends engine capabilities, loopback address and the local credential
+after the HTTP port is bound, then renews the registration every 30 seconds. Pychess
+expires registrations after 90 seconds without renewal. Revocation/removal/replacement
+stops renewal and closes the local bridge and its subprocesses. Ordinary shutdown
+removes only that process's registration; an old process cannot remove its replacement.
+The website receives no analysis requests, positions, history, custom rules or PVs
+through this registration API.
 
 ## Search ownership and cleanup
 
@@ -82,7 +94,7 @@ resource options are not sent. Native USI/UCCI need separate adapters.
 ## Website integration
 
 The sibling [Pychess repository](https://github.com/pychess/pychess-variants) owns the
-search backend interface, pairing controls, source preferences and score/PV display.
+search backend interface, account engine discovery, engine selector and score/PV display.
 External capability is separate from WASM search, rules replay and Fishnet. The
 frontend preserves ongoing-game, anti-cheat, Study permissions and Practice ownership;
 transient external results do not become saved server analysis.

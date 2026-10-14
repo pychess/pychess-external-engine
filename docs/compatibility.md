@@ -43,7 +43,9 @@ retains its browser backend.
 ## Integration coverage
 
 Native UI checks cover PV navigation, source selection, competing tabs, abort/tab-close
-cleanup, reconnect/forget, permission denial and bridge restart/token rotation. Exact
+cleanup, reconnect/removal, permission denial and bridge restart/token rotation. The
+unreleased account-registration flow also verifies owner discovery and the engine
+dropdown in Edge, including Alice without WASM search. Exact
 rules checks cover CWDA without WASM search and Capablanca's initial Embassy profile.
 Study checks switch ordinary/custom chapters and historical versions of one public
 variant name, verifying actual board rules, Practice ownership and computer permissions.

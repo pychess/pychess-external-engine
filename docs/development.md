@@ -84,7 +84,11 @@ uv run python -m tools.ui_probe --browser edge --pychess ../pychess-variants \
 ```
 
 The UI probe serves a local checkout with an in-memory database through synthetic
-HTTPS routing and contacts the real local bridge. It does not write to production.
+HTTPS routing and contacts the real local bridge. It creates a temporary signed-in
+account and engine-scoped token, then registers the bridge through the real website
+API. No account token or loopback credential is included in reports. Unrelated header
+SSE is stubbed because routed Playwright responses buffer whole bodies; native
+NDJSON goes directly to loopback without interception. It does not write to production.
 Useful cases include `--variant orda`, `--variant cwda --without-wasm`, explicit
 `--variant capablanca --fen '...'`, and `--restart-bridge`. Run
 `--variant alice --expect-unsupported` without an Alice engine for capability rejection.

@@ -15,7 +15,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, web
 
 
 async def command(*argv: str, cwd: Path, env: dict[str, str] | None = None) -> str:
@@ -36,6 +36,23 @@ async def cli_check(executable: Path, directory: Path) -> str:
     with socket.socket() as listener:
         listener.bind(("127.0.0.1", 0))
         port = listener.getsockname()[1]
+    metadata: dict[str, str] = {}
+
+    async def register(request: web.Request) -> web.Response:
+        body = await request.json()
+        metadata["token"] = body["clientSecret"]
+        return web.json_response({"id": "install1"})
+
+    async def stop(request: web.Request) -> web.Response:
+        return web.json_response({"ok": True})
+
+    website = web.Application()
+    website.router.add_post("/api/external-engine", register)
+    website.router.add_post("/api/external-engine/install1/stop", stop)
+    runner = web.AppRunner(website, access_log=None)
+    await runner.setup()
+    await web.TCPSite(runner, "127.0.0.1", 0).start()
+    site = f"http://127.0.0.1:{runner.addresses[0][1]}"
     process = await asyncio.create_subprocess_exec(
         str(executable),
         "--engine",
@@ -47,25 +64,23 @@ async def cli_check(executable: Path, directory: Path) -> str:
         str(port),
         "--allow-origin",
         "http://localhost:9999",
+        "--site",
+        site,
         cwd=directory,
-        env={**os.environ, "PYTHONUNBUFFERED": "1"},
+        env={**os.environ, "PYTHONUNBUFFERED": "1", "PYCHESS_API_TOKEN": "test_" + "x" * 40},
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.DEVNULL,
     )
     try:
         assert process.stdout is not None
-        token = ""
         async with asyncio.timeout(15):
-            while not token:
+            while True:
                 line = await process.stdout.readline()
                 if not line:
                     raise AssertionError("Installed CLI exited before pairing")
-                if line.startswith(b"Pairing token: "):
-                    token = line.decode().strip().split(": ", 1)[1]
-            # Read the aiohttp startup banner; it follows engine/rules discovery.
-            while not (await process.stdout.readline()).startswith(b"======== Running on"):
-                if process.returncode is not None:
-                    raise AssertionError("Installed CLI failed startup")
+                if line.startswith(b"Registered "):
+                    break
+        token = metadata["token"]
         headers = {"Origin": "http://localhost:9999", "Authorization": "Bearer " + token}
         address = f"http://127.0.0.1:{port}"
         async with ClientSession() as client:
@@ -108,6 +123,7 @@ async def cli_check(executable: Path, directory: Path) -> str:
         if process.returncode is None:
             process.kill()
             await process.wait()
+        await runner.cleanup()
 
 
 async def check(artifact: Path, versions: list[str]) -> dict[str, object]:

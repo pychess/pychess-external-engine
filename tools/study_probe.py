@@ -15,6 +15,7 @@ from playwright.async_api import async_playwright
 
 from pychess_external_engine.app import STATE, create_app
 from pychess_external_engine.config import EngineConfig
+from pychess_external_engine.registration import Registration
 
 SERVER_CODE = """
 import sys, asyncio, json
@@ -27,6 +28,7 @@ from pychess_global_app_state_utils import get_app_state
 from study.builder import StudyChapterBuilder
 from study.storage import create_study_from_draft, add_chapter_from_draft
 from fairy import FairyBoard
+from bot_accounts import create_bot_token, ENGINE_TOKEN_SCOPES
 import test_logger
 test_logger.init_test_logger()
 
@@ -41,6 +43,8 @@ async def main():
         await state.db.user.insert_one({'_id':owner,'enabled':True,
             'createdAt':datetime.now(UTC)-timedelta(days=30),
             'lang':'en','theme':'dark','ct':'all','perfs':{},'pperfs':{}})
+        _, api_token = await create_bot_token(state, owner, 'Study probe',
+            scopes=ENGINE_TOKEN_SCOPES)
         builder=StudyChapterBuilder(state,owner)
         first=await builder.blank_or_fen(variant='chess',name='Chess')
         study, chapter=await create_study_from_draft(state,owner,first,
@@ -65,8 +69,9 @@ async def main():
         chapters.append({'id':practice.id,'name':'Practice','variant':'chess','blocked':True})
         blocked_study, blocked=await create_study_from_draft(state,owner,first,
             name='Computer disabled',visibility='public',settings={'computer':'nobody'})
-        print(json.dumps({'port':runner.addresses[0][1],'owner':owner,'study':study.id,'chapters':chapters,
-            'blockedStudy':f'/study/{blocked_study.id}/{blocked.id}'}),flush=True)
+        seed = {'port':runner.addresses[0][1],'owner':owner,'study':study.id,'chapters':chapters,
+            'blockedStudy':f'/study/{blocked_study.id}/{blocked.id}', 'apiToken':api_token}
+        print(json.dumps(seed),flush=True)
         await asyncio.to_thread(sys.stdin.buffer.read,1)
     except Exception as exc:
         print(json.dumps({'error':type(exc).__name__+': '+str(exc)}),flush=True)
@@ -95,6 +100,7 @@ async def run(args: argparse.Namespace) -> dict[str, object]:
         stderr=asyncio.subprocess.DEVNULL,
     )
     bridge = None
+    registration = None
     report: dict[str, object] = {
         "browser": "edge",
         "siteDelivery": "Local checkout with in-memory Study database",
@@ -118,6 +124,10 @@ async def run(args: argparse.Namespace) -> dict[str, object]:
         await web.TCPSite(bridge, "127.0.0.1", 0).start()
         address = f"http://127.0.0.1:{bridge.addresses[0][1]}"
         app[STATE].authority = address.removeprefix("http://")
+        registration = Registration(
+            origin, seed["apiToken"], address, app[STATE].capabilities["engine"], token
+        )
+        await registration.start()
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True, channel="msedge")
             report["version"] = browser.version
@@ -135,9 +145,12 @@ async def run(args: argparse.Namespace) -> dict[str, object]:
                 await page.goto(origin + f"/study/{seed['study']}/{seed['chapters'][0]['id']}")
                 await page.wait_for_selector("#bars", state="visible", timeout=15000)
                 await page.locator("#bars").click()
-                await page.locator("#external-engine-address").fill(address)
-                await page.locator("#external-engine-token").fill(token)
-                await page.locator("#external-engine-connect").click()
+                await page.wait_for_function(
+                    "id => [...document.querySelector('#analysis-engine-source').options]"
+                    ".some(option => option.value === id)",
+                    arg=registration.id,
+                )
+                await page.locator("#analysis-engine-source").select_option(registration.id)
                 await page.wait_for_function(
                     "document.querySelector('.nnue').textContent === 'NATIVE'"
                 )
@@ -216,13 +229,21 @@ async def run(args: argparse.Namespace) -> dict[str, object]:
                 await page.wait_for_selector(".study-practice", timeout=15000)
                 await asyncio.wait_for(app[STATE].idle.wait(), 3)
                 await page.locator("#bars").click()
-                if not await page.locator("#external-engine-connect").is_disabled():
+                option = page.locator(f"#analysis-engine-source option[value='{registration.id}']")
+                if await option.count() and not await option.is_disabled():
                     raise AssertionError("Practice offered an external engine")
                 report["practiceRemainsBrowserOwned"] = "passed"
                 await page.goto(origin + seed["blockedStudy"])
                 await page.wait_for_selector("#bars", state="visible")
                 await page.locator("#bars").click()
-                if not await page.locator("#external-engine-connect").is_disabled():
+                await page.wait_for_function(
+                    "id => [...document.querySelector('#analysis-engine-source').options]"
+                    ".some(option => option.value === id)",
+                    arg=registration.id,
+                )
+                if not await page.locator(
+                    f"#analysis-engine-source option[value='{registration.id}']"
+                ).is_disabled():
                     raise AssertionError("Study computer permission was bypassed")
                 await asyncio.wait_for(app[STATE].idle.wait(), 3)
                 report["computerPermission"] = "passed"
@@ -235,6 +256,8 @@ async def run(args: argparse.Namespace) -> dict[str, object]:
     finally:
         if bridge is not None:
             await bridge.cleanup()
+        if registration is not None:
+            await registration.close()
         if server.stdin is not None:
             server.stdin.close()
         try:

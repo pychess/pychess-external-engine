@@ -6,12 +6,11 @@ See
 
 ## Simpler setup
 
-Provide a setup command that obtains compatible ordinary and Alice engines/networks,
-checks their identities and search compatibility, and saves configuration. Select
-platform/CPU-compatible binaries and keep engine/network releases consistent with their
-licenses and source notices. User resource ceilings and pairing remain local.
+Provide a setup command that saves the user's chosen UCI executable, engine options,
+account token and resource ceilings. Users supply engine executables and networks.
+Discover their actual search capabilities without prescribing an engine implementation.
 
-Persist settings and downloaded assets in user configuration/data directories outside
+Persist settings in user configuration/data directories outside
 uvx's disposable environments. Subsequent `uvx pychess-external-engine` launches should
 use the saved configuration. Add clear setup, upgrade and configuration diagnostics.
 
@@ -42,5 +41,5 @@ support in ordinary package installations.
 
 Provide repeatable release builds and consider PyPI Trusted Publishing. Keep dependency
 pins and the rule-name schema in agreement, test supported Python versions and retain
-immutable release artifacts. Automatic engine/network updates must preserve reproducible
-versions and recover safely from incomplete downloads or incompatible upgrades.
+immutable release artifacts. Preserve required rules dependencies independently of
+which UCI analysis executable the user chooses.

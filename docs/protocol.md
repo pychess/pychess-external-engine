@@ -6,17 +6,47 @@ local application. See [architecture.md](architecture.md) for process ownership.
 ## Connection
 
 Default address: `http://127.0.0.1:9670`. Bind only to loopback; the locally configured
-port may change. Do not accept remote addresses in the frontend connection UI.
+port may change. Account registrations accept only IPv4 loopback addresses.
 Browser support and transport restrictions are documented in
 [compatibility.md](compatibility.md).
 
 Both endpoints require an explicitly allowed HTTP(S) `Origin`, an exact local
 `Host` authority, and `Authorization: Bearer <pairing-token>`. A fresh 256-bit token
 is generated on each application start. Restarting disconnects searches and rotates
-the token; browser reconnection must ask for the new token rather than silently retry
-authentication. No cookies or Pychess account/API tokens are used.
+the local credential and updates the account registration. Browser reconnection
+fetches that registration rather than asking users to paste a token. Local engine
+operations use no cookies or Pychess account API token.
 
-Allow unauthenticated preflight for the two known routes and only their required
+## Account registration
+
+The provider authenticates to the configured Pychess website using an account token
+with `engine:read` and `engine:write` scopes. Create it at `/account/engines`; regular
+accounts need no BOT upgrade. Store it locally via `PYCHESS_API_TOKEN` or `--token-file`.
+It is distinct from the local bearer credential. The account page shows it once for
+configuration; engine discovery never returns it to the analysis frontend.
+
+| Website route | Method | Purpose |
+| --- | --- | --- |
+| `/api/external-engine` | POST | Register engine capabilities, loopback address, local `clientSecret` and process `instanceId` |
+| `/api/external-engine` | GET | Owner-only discovery via signed-in session or an engine-read token; returns local credentials with `Cache-Control: no-store` |
+| `/api/external-engine/{id}/heartbeat` | POST | Renew the matching process's registration with its engine-write token and `instanceId` |
+| `/api/external-engine/{id}/stop` | POST | Remove only that process's registration on shutdown |
+| `/api/external-engine/{id}/delete` | POST | Signed-in owner removal, protected by website CSRF checks |
+
+Registration IDs are stable account token IDs. Use a separate engine token for each
+local installation. Register only after binding the local HTTP port. Startup carries
+`protocolVersion: 1`, `address`, `clientSecret`, `engine` (the local capability object)
+and a fresh random `instanceId`. Renewal/shutdown carry only `instanceId`.
+Renew every 30 seconds; registrations expire after 90 seconds without renewal.
+An old process cannot renew or delete a replacement. Revocation, account disabling,
+removal or replacement fails renewal and stops the provider. Account tokens are stored
+hashed; local credentials exist only in expiring owner registrations and page memory.
+No engine commands, positions, move history, rule definitions or evaluations pass
+through this API. Registration adds no hosted search process or broker.
+
+## Local HTTP admission
+
+Allow unauthenticated preflight for the two known loopback routes and only their required
 methods/headers. Echo the approved origin rather than `*`, use `Vary: Origin`, and
 return `Cache-Control: no-store`. Requests omit credentials. Older PNA preflights
 receive `Access-Control-Allow-Private-Network: true` only for approved origins.
