@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, patch
 
 from pychess_external_engine.app import STATE
 from pychess_external_engine.cli import main
+from pychess_external_engine.registration import RegistrationError
 
 
 class CliTest(unittest.TestCase):
@@ -30,3 +31,20 @@ class CliTest(unittest.TestCase):
             self.assertEqual(app[STATE].controller.config.stop_timeout, 5)
             self.assertIsNone(app[STATE].controller.alice_config)
             self.assertNotIn(app[STATE].token, output.getvalue())
+
+    def test_registration_error_is_reported_as_runtime_failure(self) -> None:
+        with (
+            patch("sys.argv", ["pychess-external-engine", "--engine", "stockfish"]),
+            patch.dict(os.environ, {"PYCHESS_API_TOKEN": "test_" + "x" * 40}),
+            patch(
+                "pychess_external_engine.cli.serve",
+                new_callable=AsyncMock,
+                side_effect=RegistrationError("Pychess engine registration failed (HTTP 404)"),
+            ),
+            contextlib.redirect_stderr(io.StringIO()) as output,
+            self.assertRaises(SystemExit) as caught,
+        ):
+            main()
+        self.assertEqual(caught.exception.code, 1)
+        self.assertIn("External engine failed:", output.getvalue())
+        self.assertIn("HTTP 404", output.getvalue())

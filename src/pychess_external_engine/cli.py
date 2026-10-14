@@ -43,8 +43,9 @@ async def serve(app: web.Application, port: int, site: str, api_token: str) -> N
         registration = Registration(
             site, api_token, f"http://127.0.0.1:{port}", state.capabilities["engine"], state.token
         )
+        print(f"Registering local engine at http://127.0.0.1:{port} with {site}...", flush=True)
         await registration.start()
-        print(f"Registered {state.capabilities['engine']['name']} with Pychess.", flush=True)
+        print(f"Registered {state.capabilities['engine']['name']} with {site}.", flush=True)
         print(
             "Choose your engine in Pychess analysis settings. Leave this app running.", flush=True
         )
@@ -135,7 +136,7 @@ def main() -> None:
             )
             asyncio.run(serve(app, args.port, site, api_token))
     except (ValueError, OSError, EngineError, RegistrationError) as exc:
-        parser.exit(1, f"Engine configuration failed: {exc}\n")
+        parser.exit(1, f"External engine failed: {exc}\n")
     except KeyboardInterrupt:
         parser.exit(130)
 

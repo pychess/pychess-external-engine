@@ -130,6 +130,18 @@ different origin. The local app binds to IPv4 loopback. LAN addresses and remote
 engines are outside this implementation. Use `--site http://localhost:8080` when
 registering with a local development website.
 
+For example, to test a running local Pychess server, create the engine token at
+`http://localhost:8080/account/engines` and run:
+
+```bash
+uv run pychess-external-engine --site http://localhost:8080 \
+  --engine /absolute/path/to/your-uci-engine --token-file /absolute/path/to/your-local-token
+```
+
+Use the origin and port of your actual local server. Tokens from the public website
+and a local server are separate. The startup message identifies the website receiving
+the registration; `--allow-origin` alone does not change that website.
+
 ## Pair and analyse
 
 1. Start the app with your own engine and account token, then sign in to Pychess.
@@ -190,6 +202,10 @@ meaningful positional analysis.
 | Unable to connect | Start the app, wait for its HTTP startup banner, check the IPv4 address/port, and allow local network access for the page origin |
 | Engine not listed | Sign in with the token's owner account, start the app, wait for registration, then reload the page |
 | Invalid or revoked account token | Create an engine token in account settings and update the local token file/environment |
+| Registration API endpoint not found (HTTP 404) | Check the website shown in the error and set `--site` for local testing; the website needs the matching external-engine server integration |
+| Heartbeat reports registration removed or replaced (HTTP 409) | Stop another app using the same token or give each installation a separate token, then restart |
+| Website connection fails or times out | Check the reported site origin/port, server availability and network connection |
+| Website redirects registration | Set `--site` to the final website origin; the app does not forward account tokens through redirects |
 | Another tab is using the engine | Stop analysis in that tab or close it, then Retry; there is no job queue |
 | Cannot analyse this variant | Check the actual native/rules capabilities; install/configure Alice separately when needed |
 | Variant definition rejected | Use compatible engine/rules versions and the exact saved definition; unsupported keys require a newer verified rules adapter |
