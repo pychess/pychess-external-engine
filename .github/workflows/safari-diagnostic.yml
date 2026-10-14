@@ -21,8 +21,7 @@ jobs:
         run: safaridriver --enable
       - name: Run real Safari loopback diagnostic
         run: |
-          PYTHONPATH=src:. uv run --no-project --with aiohttp --with selenium \
-            python -m tools.safari_probe \
+          uv run --with selenium python -m tools.safari_probe \
             > safari-diagnostic.json
           cat safari-diagnostic.json
       - uses: actions/upload-artifact@v4

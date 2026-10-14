@@ -325,6 +325,16 @@ async def check(args: argparse.Namespace) -> dict[str, object]:
                 await page.locator("#bars").click()
                 other = await context.new_page()
                 await other.goto(url, wait_until="domcontentloaded")
+                # A fresh tab defaults to browser/WASM analysis. Explicitly select
+                # the occupied native engine before expecting its busy response.
+                await other.locator("#bars").click()
+                await other.wait_for_function(
+                    "id => [...document.querySelector('#analysis-engine-source').options]"
+                    ".some(option => option.value === id)",
+                    arg=registration.id,
+                )
+                await other.locator("#analysis-engine-source").select_option(registration.id)
+                await other.locator("#bars").click()
                 try:
                     await other.wait_for_function(
                         "document.querySelector('#external-engine-status')?.textContent"
