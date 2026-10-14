@@ -53,7 +53,7 @@ through this registration API.
 
 ## Search ownership and cleanup
 
-One owner covers all tabs and adapters. Competing requests receive `engine_busy`;
+One owner covers all tabs and variants. Competing requests receive `engine_busy`;
 there is no queue. The browser aborts on navigation, source changes and destruction,
 and ignores late events by request identity even if their first move is still legal.
 A tab may briefly retry its own cleanup; it cannot replace another tab's search.
@@ -85,7 +85,7 @@ Every install includes both rules libraries. Alice requests use a dedicated rule
 worker with the same single locally configured UCI executable. Startup discovers
 advertised variants and qualifies an advertised Alice capability with a legal
 shallow search. Compact Alice FEN keeps `|` before looking-glass-board pieces; moves
-retain ordinary coordinate tokens. Adapter capabilities restrict Alice to fixed rules
+retain ordinary coordinate tokens. Variant restrictions limit Alice to fixed rules
 without Chess960 or custom definitions.
 
 Each run owns one executable configuration and its options. Rules workers are selected

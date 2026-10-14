@@ -151,15 +151,19 @@ Initial production bounds, exposed in capabilities and adjustable downwards loca
 
 Each bridge run uses one UCI executable. When that engine advertises `alice` and
 passes a legal shallow search, `engine.variants` includes `alice` and
-`rules.aliceVersion` records the installed Alice rules library version. For an
-Alice-only engine, the ordinary `engine` object has `variants: ["alice"]`,
-`chess960: false` and `customRules: false`.
+`rules.aliceVersion` records the installed Alice rules library version. The engine
+object always has one name and one set of resource ceilings. Alice's fixed rules
+are described by `engine.variantRestrictions.alice`:
 
-If the same executable supports ordinary variants as well, `engine.adapters.alice`
-describes its narrower Alice rules capabilities with the same engine name and
-resource ceilings, `variants: ["alice"]`, `chess960: false` and `customRules: false`.
-This metadata does not select another executable. Clients must use the Alice
-capabilities rather than infer support from the engine's ordinary custom-rule flag.
+```json
+{"chess960": false, "customRules": false}
+```
+
+The optional `variantRestrictions` map uses advertised variant keys. Each entry has
+the two boolean flags above and can only restrict the engine's top-level flags.
+An absent entry uses the top-level flags. Restrictions neither advertise additional
+variants nor change engine identity or resource limits. Clients check the explicit
+flags without inferring Chess960 or custom-rule support from a variant name.
 
 Alice requests require both `variant` and `engineVariant` to be `alice`,
 `chess960: false`, no `rules` payload, and Pychess compact FEN. A `|` before a piece

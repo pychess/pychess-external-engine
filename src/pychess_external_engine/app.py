@@ -92,15 +92,8 @@ async def lifecycle(app: web.Application) -> AsyncIterator[None]:
                     raise EngineError(
                         "alice_qualification", "Alice did not return a legal best move"
                     )
-                alice_caps = state.controller.engine.capabilities()
-                alice_caps.update(variants=["alice"], chess960=False, customRules=False)
-                if engine["variants"]:
-                    # A multi-variant executable can have narrower Alice rules
-                    # capabilities; this is the same configured engine.
-                    engine["adapters"] = {"alice": alice_caps}
-                    engine["variants"].append("alice")
-                else:
-                    engine = alice_caps
+                engine["variants"].append("alice")
+                engine["variantRestrictions"] = {"alice": {"chess960": False, "customRules": False}}
                 rules["aliceVersion"] = alice_rules["version"]
             except TimeoutError:
                 raise EngineError(

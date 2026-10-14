@@ -109,7 +109,7 @@ Study transitions, historical definitions, Practice and computer permissions use
 local Study websockets and a temporary database:
 
 ```bash
-uv run python -m tools.study_probe --browser edge --pychess ../pychess-variants \
+uv run python -m tools.study_probe --pychess ../pychess-variants \
   --engine /path/to/fairy-stockfish --setoption 'Use NNUE' false
 ```
 

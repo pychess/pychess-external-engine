@@ -138,8 +138,11 @@ class AliceLifecycleTest(unittest.IsolatedAsyncioTestCase):
                 caps = app[STATE].capabilities["engine"]
                 self.assertIn("chess", caps["variants"])
                 self.assertIn("alice", caps["variants"])
-                self.assertEqual(caps["adapters"]["alice"]["name"], caps["name"])
-                self.assertFalse(caps["adapters"]["alice"]["customRules"])
+                self.assertNotIn("adapters", caps)
+                self.assertEqual(
+                    caps["variantRestrictions"],
+                    {"alice": {"chess960": False, "customRules": False}},
+                )
                 process = app[STATE].controller.engine.process
                 for data in (payload(), alice_payload(), payload("chess-again")):
                     response = await client.post(
@@ -205,8 +208,10 @@ class AliceLifecycleTest(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(caps["variants"], ["alice"])
                 self.assertEqual(caps["name"], "Fake UCI engine")
                 self.assertNotIn("adapters", caps)
-                self.assertFalse(caps["chess960"])
-                self.assertFalse(caps["customRules"])
+                self.assertEqual(
+                    caps["variantRestrictions"],
+                    {"alice": {"chess960": False, "customRules": False}},
+                )
                 process = app[STATE].controller.engine.process
                 response = await client.post(
                     "/v1/analyse",
@@ -263,7 +268,9 @@ class NativeAliceTest(unittest.IsolatedAsyncioTestCase):
             self.assertIn("alice", caps["variants"])
             self.assertEqual(caps["variants"], ["alice"])
             self.assertNotIn("adapters", caps)
-            self.assertFalse(caps["chess960"])
+            self.assertEqual(
+                caps["variantRestrictions"], {"alice": {"chess960": False, "customRules": False}}
+            )
             process = app[STATE].controller.engine.process
             for index, history in enumerate(([], ["e2e4"], ["e2e4", "e7e5"])):
                 current = sf.get_fen("alice", FEN, history) if history else FEN
