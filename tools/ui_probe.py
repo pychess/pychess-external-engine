@@ -94,11 +94,6 @@ async def check(args: argparse.Namespace) -> dict[str, object]:
         token = secrets.token_urlsafe(32)
         app = create_app(
             EngineConfig(command=(args.engine,), options=tuple(tuple(o) for o in args.setoption)),
-            alice_config=EngineConfig(
-                command=(args.alice_engine,), options=tuple(tuple(o) for o in args.alice_setoption)
-            )
-            if args.alice_engine
-            else None,
             token=token,
             origins=(origin,),
             authority="",
@@ -239,7 +234,7 @@ async def check(args: argparse.Namespace) -> dict[str, object]:
                     ".includes(name) && "
                     "document.querySelector('.nnue').textContent === 'NATIVE' && "
                     "!document.querySelector('#engine-enabled').disabled",
-                    arg="Alice-Stockfish" if args.variant == "alice" else "Fairy-Stockfish",
+                    arg=app[STATE].capabilities["engine"]["name"],
                     timeout=60000 if args.headed else 15000,
                 )
                 report["pairing"] = "passed"
@@ -247,9 +242,7 @@ async def check(args: argparse.Namespace) -> dict[str, object]:
                     "#analysis-engine-source option:checked"
                 ).text_content()
                 caps = app[STATE].capabilities["engine"]
-                expected_name = (
-                    caps["adapters"]["alice"]["name"] if args.variant == "alice" else caps["name"]
-                )
+                expected_name = caps["name"]
                 if chosen_name != expected_name:
                     raise AssertionError("Engine dropdown did not show the selected engine's name")
                 if await page.locator(
@@ -366,12 +359,6 @@ async def check(args: argparse.Namespace) -> dict[str, object]:
                         EngineConfig(
                             command=(args.engine,), options=tuple(tuple(o) for o in args.setoption)
                         ),
-                        alice_config=EngineConfig(
-                            command=(args.alice_engine,),
-                            options=tuple(tuple(o) for o in args.alice_setoption),
-                        )
-                        if args.alice_engine
-                        else None,
                         token=token,
                         origins=(origin,),
                         authority=urlsplit(address).netloc,
@@ -484,8 +471,6 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pychess", default="../pychess-variants")
     parser.add_argument("--engine", required=True)
-    parser.add_argument("--alice-engine")
-    parser.add_argument("--alice-setoption", nargs=2, action="append", default=[])
     parser.add_argument(
         "--setoption", nargs=2, action="append", default=[], metavar=("NAME", "VALUE")
     )

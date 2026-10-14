@@ -147,17 +147,23 @@ Initial production bounds, exposed in capabilities and adjustable downwards loca
 - Handshake/readiness/stop deadlines: finite local configuration; failures restart
   the engine and report an error rather than leaving a lease held.
 
-## Optional Alice adapter
+## Alice rules capabilities
 
-When configured and qualified, `engine.variants` includes `alice`, and
-`engine.adapters.alice` contains its own engine name, resource ceilings and variant
-list (`["alice"]`). Its `chess960` and `customRules` flags are both false.
-`rules.aliceVersion` records the optional rules library version. Clients must use
-these adapter capabilities for Alice rather than infer support from the primary
-engine's custom-rule flag. An ordinary bridge omits this adapter.
+Each bridge run uses one UCI executable. When that engine advertises `alice` and
+passes a legal shallow search, `engine.variants` includes `alice` and
+`rules.aliceVersion` records the installed Alice rules library version. For an
+Alice-only engine, the ordinary `engine` object has `variants: ["alice"]`,
+`chess960: false` and `customRules: false`.
+
+If the same executable supports ordinary variants as well, `engine.adapters.alice`
+describes its narrower Alice rules capabilities with the same engine name and
+resource ceilings, `variants: ["alice"]`, `chess960: false` and `customRules: false`.
+This metadata does not select another executable. Clients must use the Alice
+capabilities rather than infer support from the engine's ordinary custom-rule flag.
 
 Alice requests require both `variant` and `engineVariant` to be `alice`,
 `chess960: false`, no `rules` payload, and Pychess compact FEN. A `|` before a piece
 marks its layer; coordinate moves stay unchanged. Both FENs and the complete history
-are checked with the isolated Alice library. One owner covers both adapters, and
-switching closes the previous native engine before launching the next.
+are checked with the isolated Alice library. One owner covers every search and
+variant; rules workers are replaced for each search while the executable remains
+locally configured.

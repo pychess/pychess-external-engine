@@ -14,7 +14,10 @@ def main() -> None:
     parser.add_argument("--mode", default="normal")
     parser.add_argument("--log")
     parser.add_argument("--alice", action="store_true")
+    parser.add_argument("--variant-only")
+    parser.add_argument("--with-alice", action="store_true")
     args = parser.parse_args()
+    sole_variant = "alice" if args.alice else args.variant_only
     loaded = False
     searches = 0
     for raw in sys.stdin:
@@ -35,17 +38,23 @@ def main() -> None:
                 print("option name UCI_Chess960 type check default false", flush=True)
                 print("option name UCI_AnalyseMode type check default false", flush=True)
                 print("option name VariantPath type string default <empty>", flush=True)
-                variants = " var custom-variant" if loaded else ""
+                variants = (" var custom-variant" if loaded else "") + (
+                    " var alice" if args.with_alice else ""
+                )
                 print(
                     (
-                        "option name UCI_Variant type combo default alice var alice"
-                        if args.alice
+                        f"option name UCI_Variant type combo default {sole_variant} "
+                        f"var {sole_variant}"
+                        if sole_variant
                         else "option name UCI_Variant type combo default chess var chess var shogi"
                         + variants
                     ),
                     flush=True,
                 )
             print("uciok", flush=True)
+        elif line.startswith("setoption name UCI_Variant value ") and sole_variant:
+            # Model engines whose single-value combo setter fails on a redundant reset.
+            return
         elif line.startswith("setoption name VariantPath value "):
             loaded = True
         elif line == "isready":
@@ -71,7 +80,8 @@ def main() -> None:
                     flush=True,
                 )
             if args.mode not in ("wait", "delayed-stop", "ignore-stop", "oversized-output"):
-                print("bestmove e2e4 ponder e7e5", flush=True)
+                move = "e2e5" if args.mode == "illegal-bestmove" else "e2e4"
+                print(f"bestmove {move} ponder e7e5", flush=True)
         elif line == "stop":
             if args.mode == "ignore-stop":
                 continue

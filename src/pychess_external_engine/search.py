@@ -117,7 +117,6 @@ class Info:
 class SearchController:
     config: EngineConfig
     rules_factory: Callable[[], SearchRules]
-    alice_config: EngineConfig | None = None
     alice_rules_factory: Callable[[], SearchRules] | None = None
     engine: UciEngine = field(init=False)
     active: SearchRequest | None = None
@@ -156,9 +155,9 @@ class SearchController:
         self._deadline = monotonic() + self.config.max_search_seconds
         try:
             alice = request.variant == "alice" or request.engine_variant == "alice"
-            if alice and (self.alice_config is None or self.alice_rules_factory is None):
+            if alice and ("alice" not in self.engine.variants or self.alice_rules_factory is None):
                 raise ProtocolError(
-                    "unsupported_variant", "Configure the optional Alice adapter", 422
+                    "unsupported_variant", "The configured engine cannot search Alice rules", 422
                 )
             factory = self.alice_rules_factory if alice else self.rules_factory
             assert factory is not None
@@ -166,11 +165,7 @@ class SearchController:
             if self._maintenance is not None:
                 await asyncio.shield(self._maintenance)
             self.terminal = await self.rules.start(request)
-            config = self.alice_config if alice else self.config
-            assert config is not None
-            if self.engine.config is not config:
-                await self.engine.close(force=True)
-                self.engine = UciEngine(config)
+            config = self.config
             await self.engine.prepare_rules(request.rules)
             if request.engine_variant not in self.engine.variants:
                 raise ProtocolError(
@@ -180,16 +175,7 @@ class SearchController:
                 raise ProtocolError(
                     "unsupported_chess960", "The engine does not advertise Chess960 mode", 422
                 )
-            variant_option = self.engine.options.get("uci_variant")
-            # Dedicated Alice engines already select their sole variant. Older
-            # Stockfish combo setters crash when default/var repeat the same key.
-            if not (
-                alice
-                and self.engine.variants == ("alice",)
-                and variant_option is not None
-                and variant_option.default == "alice"
-            ):
-                await self.engine.set_optional("UCI_Variant", request.engine_variant)
+            await self.engine.select_variant(request.engine_variant)
             await self.engine.set_optional("UCI_Chess960", str(request.chess960).lower())
             for name, value, local_max in (
                 ("Threads", request.threads, config.max_threads),

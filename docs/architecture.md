@@ -7,6 +7,10 @@ Pychess serves the frontend through its existing application. Evaluations stream
 directly to the browser, requiring no extra hosted server. An engine-scoped account
 token registers connection metadata with the existing Pychess website.
 
+Each run configures one user-supplied UCI executable and one set of local options.
+Discovery determines its advertised variants; the bridge selects the matching rules
+library internally. Executable names do not select an engine profile.
+
 ```text
 Pychess website -> browser analysis controller
                        |
@@ -78,14 +82,16 @@ registrations. Historical Study names are resolved to immutable frontend aliases
 ## Alice and other engines
 
 Every install includes both rules libraries. Alice requests use a dedicated rules
-worker and locally configured Alice engine. Startup qualifies that engine with a legal
+worker with the same single locally configured UCI executable. Startup discovers
+advertised variants and qualifies an advertised Alice capability with a legal
 shallow search. Compact Alice FEN keeps `|` before looking-glass-board pieces; moves
 retain ordinary coordinate tokens. Adapter capabilities restrict Alice to fixed rules
 without Chess960 or custom definitions.
 
-Switching ordinary/Alice adapters closes the previous native process before launching
-the next. A single advertised default Alice variant is not redundantly set, avoiding
-an older Alice engine's combo-option setter failure. A compatible Alice NNUE network
+Each run owns one executable configuration and its options. Rules workers are selected
+internally for each search; no separate Alice executable or options are configured.
+An engine's sole advertised default variant is not redundantly set, avoiding
+single-value combo-option setter failures. A compatible Alice NNUE network
 is necessary for meaningful evaluation; NNUE-disabled Alice scores are diagnostic zero.
 
 Chess-only UCI engines default to Chess when no variant option exists. Missing optional

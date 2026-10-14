@@ -223,7 +223,7 @@ def validate_position(request: SearchRequest) -> bool:
         admit_alice_fen(request.initial_fen)
         admit_alice_fen(request.current_fen)
     elif request.variant == "alice" or variant == "alice":
-        raise ProtocolError("unsupported_variant", "Configure the optional Alice adapter", 422)
+        raise ProtocolError("unsupported_variant", "Alice requires its isolated rules library", 422)
     if request.variant in HIDDEN_VARIANTS or variant in HIDDEN_VARIANTS:
         raise ProtocolError(
             "hidden_information", "Hidden-information analysis needs a dedicated adapter", 422

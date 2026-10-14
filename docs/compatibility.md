@@ -1,7 +1,7 @@
 # Compatibility
 
-The verification basis is release `0.1.0` and the browser checks described below,
-including earlier transport coverage from `0.1.0a1`. Availability requires matching
+The verification basis is release `0.1.0`, the current source's single-engine native/UI
+checks, and earlier transport coverage from `0.1.0a1`. Availability requires matching
 native engine support, rules-library support and website analysis permission. A handshake,
 a variant name or successful replay alone does not establish search support.
 
@@ -29,7 +29,7 @@ tests do not replace user consent in the actual UI.
 | --- | --- |
 | Fairy-Stockfish 051026 LB / pyffish 0.0.90, NNUE disabled | Chess, Black-to-move scores, Chess960/Embassy castling, Shogi drops/promotions, Kyoto demotion, Janggi pass, Xiangqi/Grand ten-rank moves, Crazyhouse promoted captures/pockets, S-Chess gating, repetition history and terminal mate |
 | Same engine with exact custom definitions | Orda, CWDA FIDE/Clobberers resolution, historical Study snapshots and changed inherited rules |
-| Alice-Stockfish 1.0 / pyffish-alice 0.0.3 / Legacy Alice_v1.nnue | Fixed Alice rules, compact layer FEN/history, legal PVs, transfers, castling/promotion, Black-to-move search and ordinary/Alice switching |
+| Alice-Stockfish 1.0 / pyffish-alice 0.0.3 / Legacy Alice_v1.nnue | Standalone engine startup/search, fixed Alice rules, compact layer FEN/history, legal PVs, transfers, castling/promotion and Black-to-move search |
 
 The native checks use representative shallow searches, not exhaustive rule or
 engine-strength verification. Other single-board variants can be available when both
@@ -52,6 +52,11 @@ Study checks switch ordinary/custom chapters and historical versions of one publ
 variant name, verifying actual board rules, Practice ownership and computer permissions.
 Settings were checked at desktop/mobile sizes in light/dark themes. Alice UI uses its
 NNUE network with WASM search blocked.
+
+The source's single-engine interface uses the same `--engine` and `--setoption`
+arguments for Fairy-Stockfish and Alice-Stockfish. Fresh Edge checks cover native
+search, discovery, PV navigation, ownership, permission denial and restart for each
+executable against the local Pychess checkout. PyPI `0.1.0` predates this interface.
 
 Plain wheel installs include both rules libraries and were verified across the four
 Python versions above. Source installation, public uvx installation, CLI discovery,

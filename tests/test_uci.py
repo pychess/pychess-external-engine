@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -92,6 +93,44 @@ class UciTest(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(engine.capabilities()["chess960"])
         finally:
             await engine.close()
+
+    async def test_sole_default_variant_is_not_reset_for_any_engine(self) -> None:
+        for variant in ("alice", "shogi", "chess"):
+            with self.subTest(variant=variant), tempfile.TemporaryDirectory() as directory:
+                log = Path(directory) / "commands"
+                engine = UciEngine(
+                    EngineConfig(
+                        (
+                            sys.executable,
+                            str(FAKE_ENGINE),
+                            "--variant-only",
+                            variant,
+                            "--log",
+                            str(log),
+                        )
+                    )
+                )
+                try:
+                    await engine.open()
+                    await engine.select_variant(variant)
+                    await engine.ready()
+                    self.assertNotIn("setoption name UCI_Variant", log.read_text())
+                finally:
+                    await engine.close()
+
+    async def test_multi_variant_selection_is_sent_even_for_default_variant(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            log = Path(directory) / "commands"
+            engine = UciEngine(EngineConfig((sys.executable, str(FAKE_ENGINE), "--log", str(log))))
+            try:
+                await engine.open()
+                await engine.select_variant("shogi")
+                await engine.select_variant("chess")
+                await engine.ready()
+                self.assertIn("setoption name UCI_Variant value shogi", log.read_text())
+                self.assertIn("setoption name UCI_Variant value chess", log.read_text())
+            finally:
+                await engine.close()
 
     async def test_handshake_errors_release_process(self) -> None:
         for mode in ("no-handshake", "no-ready", "exit"):

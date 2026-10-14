@@ -225,6 +225,14 @@ class UciEngine:
         if name.casefold() in self.options:
             await self.set_option(name, value)
 
+    async def select_variant(self, variant: str) -> None:
+        option = self.options.get("uci_variant")
+        # Single-variant engines already select their sole default. Some combo
+        # setters fail when default/var repeat the same key (including Alice 1.0).
+        if option is not None and option.choices == (variant,) and option.default == variant:
+            return
+        await self.set_optional("UCI_Variant", variant)
+
     async def ready(self) -> None:
         await self.send("isready")
         try:

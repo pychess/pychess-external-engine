@@ -4,6 +4,10 @@ Version `0.1.0` uses account-token registration and requires the matching Pyches
 frontend/server integration. The earlier `0.1.0a1` manual connection flow is described
 in its [release README](https://github.com/pychess/pychess-external-engine/tree/v0.1.0a1).
 
+The source checkout configures one UCI executable per run through `--engine`,
+`--engine-arg` and `--setoption`, including Alice engines. PyPI `0.1.0` predates
+this simplified interface; use the source checkout for the Alice commands below.
+
 ## Requirements
 
 Use Linux x86_64 with a compatible native UCI executable. The initial browser matrix
@@ -122,7 +126,7 @@ Threads, Hash, MultiPV, UCI_Variant, UCI_Chess960 and UCI_AnalyseMode are manage
 the bridge. Configure their ceilings through the dedicated options rather than
 `--setoption`. MultiPV requests are capped at 20 and by the engine's bounds. Browser
 resource requests can only reduce locally configured ceilings. Only one search owns
-the bridge at a time, even when an optional Alice engine is configured.
+the bridge at a time. Each run uses exactly one locally configured UCI executable.
 
 For development, add the actual frontend origin, for example
 `--allow-origin http://localhost:8080`. A scheme, host or port difference creates a
@@ -177,19 +181,21 @@ sent by the page. Unknown rule keys, stale/missing inheritance, incompatible def
 and arbitrary file-path directives are rejected. Pinned rules-library compatibility
 can limit a newer native engine's custom features.
 
-Alice rules are included automatically. Configure a separate Alice engine:
+Alice rules are included automatically. Choose an Alice-capable UCI executable with
+the same arguments used for any engine:
 
 ```bash
 uv run pychess-external-engine \
-  --engine /absolute/path/to/fairy-stockfish \
-  --setoption 'Use NNUE' false --alice-engine /absolute/path/to/alice-stockfish \
-  --alice-setoption EvalFile /absolute/path/to/Alice_v1.nnue \
+  --engine /absolute/path/to/alice-stockfish \
+  --setoption EvalFile /absolute/path/to/Alice_v1.nnue \
   --token-file /absolute/path/to/your-token
 ```
 
-Use repeated `--alice-engine-arg` and `--alice-setoption` for its local configuration.
-Startup qualifies Alice with a legal shallow search. A failed Alice configuration
-stops startup; omit Alice options to run the ordinary bridge.
+Use repeated `--engine-arg` and `--setoption` for local configuration. The bridge
+discovers advertised variants and chooses the matching isolated rules library
+internally. An engine without a variant option is treated as a chess engine.
+An advertised Alice capability is qualified with a legal shallow search before
+registration. A failed qualification stops startup with an error.
 Alice uses compact `|` FEN and fixed rules; Alice Chess960/custom definitions are
 unsupported. The tested Alice-Stockfish 1.0 uses its Legacy Alice_v1.nnue network.
 Its NNUE-disabled mode produces zero diagnostic scores, useful for tests but not
@@ -207,7 +213,7 @@ meaningful positional analysis.
 | Website connection fails or times out | Check the reported site origin/port, server availability and network connection |
 | Website redirects registration | Set `--site` to the final website origin; the app does not forward account tokens through redirects |
 | Another tab is using the engine | Stop analysis in that tab or close it, then Retry; there is no job queue |
-| Cannot analyse this variant | Check the actual native/rules capabilities; install/configure Alice separately when needed |
+| Cannot analyse this variant | Check the configured executable's actual native/rules capabilities; choose an engine supporting the required variant |
 | Variant definition rejected | Use compatible engine/rules versions and the exact saved definition; unsupported keys require a newer verified rules adapter |
 | Analysis fails after pairing | Check executable/network options locally, then reconnect; hung/crashed engines are stopped and ownership is released |
 | Browser controls absent | Use the updated Pychess frontend; this local package does not deploy website changes |

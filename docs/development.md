@@ -32,7 +32,11 @@ PYCHESS_TEST_ALICE_NETWORK=/path/to/Alice_v1.nnue \
   uv run python -m unittest discover -s tests -v
 ```
 
-Ordinary native tests disable NNUE. Alice tests use the supplied network; without
+The ordinary native suite expects a compatible Fairy-Stockfish large-board build,
+including Chess, Shogi, Xiangqi and Grand support. This is a test-fixture requirement;
+the application accepts other compatible UCI engines for their supported variants.
+Alice native tests need only their Alice executable, independently of the ordinary
+engine setting. Ordinary native tests disable NNUE. Alice tests use the supplied network; without
 `PYCHESS_TEST_ALICE_NETWORK` they use zero diagnostic evaluation. Check skipped tests
 before reporting native coverage. Consult [architecture.md](architecture.md) and
 [protocol.md](protocol.md) before changing ownership, rules or move/score handling.
@@ -91,14 +95,14 @@ SSE is stubbed because routed Playwright responses buffer whole bodies; native
 NDJSON goes directly to loopback without interception. It does not write to production.
 Useful cases include `--variant orda`, `--variant cwda --without-wasm`, explicit
 `--variant capablanca --fen '...'`, and `--restart-bridge`. Run
-`--variant alice --expect-unsupported` without an Alice engine for capability rejection.
+`--variant alice --expect-unsupported` with an engine that does not advertise Alice
+for capability rejection.
 For Alice UI:
 
 ```bash
 uv run python -m tools.ui_probe --browser edge --variant alice --without-wasm \
-  --engine /path/to/fairy-stockfish --setoption 'Use NNUE' false \
-  --alice-engine /path/to/alice-stockfish \
-  --alice-setoption EvalFile /path/to/Alice_v1.nnue
+  --engine /path/to/alice-stockfish \
+  --setoption EvalFile /path/to/Alice_v1.nnue
 ```
 
 Study transitions, historical definitions, Practice and computer permissions use real

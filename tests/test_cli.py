@@ -29,8 +29,44 @@ class CliTest(unittest.TestCase):
             self.assertEqual(serve.call_args.args[1], port)
             self.assertEqual(serve.call_args.args[2], "https://www.pychess.org")
             self.assertEqual(app[STATE].controller.config.stop_timeout, 5)
-            self.assertIsNone(app[STATE].controller.alice_config)
             self.assertNotIn(app[STATE].token, output.getvalue())
+
+    def test_one_engine_and_its_options_are_used_without_variant_specific_flags(self) -> None:
+        with (
+            patch(
+                "sys.argv",
+                [
+                    "pychess-external-engine",
+                    "--engine",
+                    "alice-stockfish",
+                    "--engine-arg=--example",
+                    "--setoption",
+                    "EvalFile",
+                    "/local/network.nnue",
+                ],
+            ),
+            patch.dict(os.environ, {"PYCHESS_API_TOKEN": "test_" + "x" * 40}),
+            patch("pychess_external_engine.cli.serve", new_callable=AsyncMock) as serve,
+        ):
+            main()
+        config = serve.call_args.args[0][STATE].controller.config
+        self.assertEqual(config.command, ("alice-stockfish", "--example"))
+        self.assertEqual(config.options, (("EvalFile", "/local/network.nnue"),))
+
+    def test_removed_alice_flags_are_rejected(self) -> None:
+        for arguments in (
+            ["--alice-engine", "alice-stockfish"],
+            ["--alice-engine-arg=--example"],
+            ["--alice-setoption", "EvalFile", "/local/network.nnue"],
+        ):
+            with (
+                self.subTest(arguments=arguments),
+                patch("sys.argv", ["pychess-external-engine", "--engine", "stockfish", *arguments]),
+                contextlib.redirect_stderr(io.StringIO()),
+                self.assertRaises(SystemExit) as caught,
+            ):
+                main()
+            self.assertEqual(caught.exception.code, 2)
 
     def test_registration_error_is_reported_as_runtime_failure(self) -> None:
         with (
