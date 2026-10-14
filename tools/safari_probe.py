@@ -68,9 +68,15 @@ async def check(site: str) -> dict[str, object]:
                 raise AssertionError(result["error"])
             if result != {"validStatus": 200, "prototype": True, "invalidStatus": 401}:
                 raise AssertionError(f"Unexpected transport results: {result}")
-            return {"browser": "Safari", "version": driver.capabilities.get("browserVersion"),
-                    "site": site, "context": context, "transport": "passed",
-                    "pairing": "passed", "scope": "prototype capabilities only"}
+            return {
+                "browser": "Safari",
+                "version": driver.capabilities.get("browserVersion"),
+                "site": site,
+                "context": context,
+                "transport": "passed",
+                "pairing": "passed",
+                "scope": "prototype capabilities only",
+            }
         finally:
             driver.quit()
 
