@@ -210,3 +210,15 @@ are not installed in the application wheel.
 Documentation-only changes need Markdown rendering, link checks and diff review.
 README or manifest changes also need a temporary build and metadata/content checks;
 use `uv build --no-sources --out-dir /tmp/<build-directory>` to preserve release artifacts.
+
+### Real Safari diagnostic (manual CI)
+
+Run the **Real Safari diagnostic** GitHub Actions workflow via *Run workflow*.
+It uses `macos-15`, Apple's actual Safari/SafariDriver, a disposable loopback
+prototype, and a public HTTPS Pychess analysis page. No engine or site state is
+modified. It verifies valid/invalid pairing HTTP responses and secure-context
+transport; it does **not** establish production native search, Safari permission
+denial, or full UI support. Safari may reject or prompt for local access under
+unattended automation; a red run is useful evidence, not a reason to relax
+browser security. Review the uploaded JSON diagnostic before updating
+`docs/compatibility.md`.

@@ -1,0 +1,33 @@
+name: Real Safari diagnostic
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  safari:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+      - name: Enable Safari automation
+        run: safaridriver --enable
+      - name: Run real Safari loopback diagnostic
+        run: |
+          PYTHONPATH=src:. uv run --no-project --with aiohttp --with selenium \
+            python -m tools.safari_probe \
+            > safari-diagnostic.json
+          cat safari-diagnostic.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: safari-diagnostic
+          path: safari-diagnostic.json
+          if-no-files-found: warn
