@@ -15,7 +15,7 @@ Run a targeted unittest module for a local change, for example:
 uv run python -m unittest discover -s tests -p test_rules.py -v
 ```
 
-For shared lifecycle/protocol/rules changes and release validation:
+For shared lifecycle/protocol/rules changes:
 
 ```bash
 uv run python -m unittest discover -s tests -v
@@ -113,34 +113,85 @@ Website changes must also follow that repository's AGENTS.md and quality gates.
 
 ## Packaging and releases
 
-Build without project-specific dependency sources and validate metadata:
+### Automated release
+
+[Python checks and PyPI release](../.github/workflows/ci.yml) runs on branch pushes,
+pull requests and `v*` tags. It checks formatting, lint and types, builds a wheel and
+source archive once, validates versions/metadata/contents, and tests fresh installs
+of both artifacts on Python 3.11–3.14. Each installation runs the full unit suite,
+imports both rules libraries and exercises installed CLI registration and shutdown
+during a search using the fake UCI fixture. Native tests skip without configured
+executables; receipts report these skips and the fixture engine explicitly.
+Native-engine and browser compatibility remain separate, explicitly configured checks.
+
+Only a tag push in this repository can publish. The tag must match `pyproject.toml`,
+the runtime version and `uv.lock`; its commit must already be on `main`. The publish
+job waits for all checks, verifies SHA-256 hashes and uploads the tested distributions
+through Trusted Publishing without rebuilding. Branches, pull requests and manual
+workflow runs validate only. Installation receipts are retained as workflow artifacts.
+Use those results for release validation rather than repeating green CI locally.
+
+One-time configuration:
+
+1. Create a GitHub environment named `pypi`, allowing deployment only from `v*` tags.
+2. In the project's [PyPI Publishing settings](https://pypi.org/manage/project/pychess-external-engine/settings/publishing/),
+   add a GitHub Trusted Publisher with owner `pychess`, repository
+   `pychess-external-engine`, workflow filename `ci.yml`, and environment `pypi`.
+
+No PyPI API token is needed in GitHub secrets. See the
+[PyPI Trusted Publishing documentation](https://docs.pypi.org/trusted-publishers/adding-a-publisher/).
+
+For each release, update the version in `pyproject.toml` and
+`src/pychess_external_engine/__init__.py`, run `uv lock`, update installation examples
+and compatibility claims as appropriate, and merge into `main`. After CI passes,
+create and push the matching annotated tag, for example for a future `0.1.1`:
 
 ```bash
-uv build --no-sources
-uvx twine check --strict dist/pychess_external_engine-<version>-py3-none-any.whl \
-  dist/pychess_external_engine-<version>.tar.gz
+git tag -a v0.1.1 -m 'Release 0.1.1'
+git push origin refs/tags/v0.1.1
 ```
 
-Replace `<version>` with the actual package version. Before a requested publication,
-run clean installation checks on the exact built artifacts:
+Watch the tag's workflow to confirm publication. Published versions and tags are
+immutable; do not move a tag or reuse a version. A failed validation can be rerun for
+the same unchanged tag. If upload partially succeeds, verify the published file hashes
+before recovering; the workflow fails on existing files rather than silently skipping
+them. Do not create or move release tags for workflow testing: a branch push or manual
+run exercises validation without publishing.
+
+### Local packaging diagnostics
+
+Use these commands when developing release tooling or diagnosing a workflow failure.
+Build into a fresh temporary directory without project-specific dependency sources:
+
+```bash
+release_dist=$(mktemp -d)
+uv build --no-sources --out-dir "$release_dist"
+uv run python -m tools.release_check --dist "$release_dist"
+uvx twine check --strict "$release_dist"/*.whl "$release_dist"/*.tar.gz
+```
+
+Replace `<version>` with the actual package version. To repeat an installation check
+with explicitly configured native executables:
 
 ```bash
 PYCHESS_TEST_ENGINE=/path/to/fairy-stockfish \
 PYCHESS_TEST_ALICE_ENGINE=/path/to/alice-stockfish \
 PYCHESS_TEST_ALICE_NETWORK=/path/to/Alice_v1.nnue \
   uv run python -m tools.install_probe \
-    --artifact dist/pychess_external_engine-<version>-py3-none-any.whl
+    --artifact "$release_dist/pychess_external_engine-<version>-py3-none-any.whl"
 ```
 
 The probe verifies installed-code imports of both rules libraries, tests and the
-installed CLI's pairing/active-search shutdown on Python 3.11–3.14. Repeated `--python`
-selects interpreters. Use a source archive to verify a source installation.
+installed CLI's registration/active-search shutdown on Python 3.11–3.14. Repeated
+`--python` selects interpreters. Use a source archive to verify a source installation.
+Without a configured executable, CLI lifecycle checks use the fake fixture and
+native search tests skip; this does not verify native search compatibility.
 
-Inspect wheel/source contents for license/notice, required dependencies and expected
-source docs/tests/tools. Engines/networks are not bundled. The source archive includes
-AGENTS.md and the lockfile; development tools are not installed in the application
-wheel. Upload only the exact verified distributions. Never overwrite a published
-version or tag, and keep credentials outside source and reports.
+The distribution checker verifies license/notice, required rules dependencies, CLI
+entry point, runtime source and source docs/tests/tools against the checkout. It
+rejects stale or unexpected files and writes `SHA256SUMS`. Engines/networks are not
+bundled. The source archive includes AGENTS.md and the lockfile; development tools
+are not installed in the application wheel.
 
 Documentation-only changes need Markdown rendering, link checks and diff review.
 README or manifest changes also need a temporary build and metadata/content checks;

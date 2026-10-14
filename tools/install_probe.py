@@ -31,8 +31,18 @@ async def command(*argv: str, cwd: Path, env: dict[str, str] | None = None) -> s
 
 async def cli_check(executable: Path, directory: Path) -> str:
     engine = os.environ.get("PYCHESS_TEST_ENGINE")
-    if not engine:
-        return "not run: no native executable configured"
+    engine_args = (
+        ["--engine", engine, "--setoption", "Use NNUE", "false"]
+        if engine
+        else [
+            "--engine",
+            str(executable.parent / "python"),
+            "--engine-arg",
+            str(Path(__file__).resolve().parents[1] / "tests/fake_engine.py"),
+            "--engine-arg=--mode",
+            "--engine-arg=wait",
+        ]
+    )
     with socket.socket() as listener:
         listener.bind(("127.0.0.1", 0))
         port = listener.getsockname()[1]
@@ -55,11 +65,7 @@ async def cli_check(executable: Path, directory: Path) -> str:
     site = f"http://127.0.0.1:{runner.addresses[0][1]}"
     process = await asyncio.create_subprocess_exec(
         str(executable),
-        "--engine",
-        engine,
-        "--setoption",
-        "Use NNUE",
-        "false",
+        *engine_args,
         "--port",
         str(port),
         "--allow-origin",
@@ -195,6 +201,9 @@ async def check(artifact: Path, versions: list[str]) -> dict[str, object]:
                     "installedCode": True,
                     "cliHelp": "passed",
                     "cliStartupPairingShutdown": cli,
+                    "cliEngine": "native"
+                    if os.environ.get("PYCHESS_TEST_ENGINE")
+                    else "fake UCI fixture",
                     "result": "passed",
                 }
             )

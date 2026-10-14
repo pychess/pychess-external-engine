@@ -39,7 +39,7 @@ support in ordinary package installations.
 
 ## Release maintenance
 
-Provide repeatable release builds and consider PyPI Trusted Publishing. Keep dependency
+Maintain the automated release workflow and PyPI Trusted Publishing. Keep dependency
 pins and the rule-name schema in agreement, test supported Python versions and retain
 immutable release artifacts. Preserve required rules dependencies independently of
 which UCI analysis executable the user chooses.

@@ -61,7 +61,10 @@ uv run pyrefly check --min-severity warn
 ```
 
 Run targeted unittest modules by default. Use full discovery for shared lifecycle,
-protocol, rules or release changes. Native tests require explicitly configured
+protocol and rules changes. CI runs full discovery against installed wheel/source
+artifacts on Python 3.11–3.14. For releases, use the successful tag workflow's checks
+and installation receipts; do not repeat successful CI checks locally unless changes,
+failures or missing coverage justify it. Native tests require explicitly configured
 executables; see `docs/development.md`. Never describe skipped native tests or a
 successful UCI handshake as verified search support. Browser changes need relevant
 probes using fresh profiles and normal browser security.
@@ -78,5 +81,10 @@ transcripts and temporary credentials out of maintained documentation; historica
 material is available in git and release tags.
 
 Preserve LICENSE/NOTICE attribution. When publishing is requested, use a new package
-version for changed artifacts, validate the exact distributions, and keep publishing
-credentials outside the repository. Published versions and tags are immutable.
+version for changed artifacts and publish through `.github/workflows/ci.yml` by
+pushing its matching `v<version>` tag from a commit already merged into `main`.
+The workflow validates and tests the exact distributions, then publishes with PyPI
+Trusted Publishing. Follow `docs/development.md` for one-time configuration and
+local diagnostics; do not manually upload or create a release tag just to test CI.
+Keep publishing credentials outside the repository. Published versions and tags
+are immutable.
