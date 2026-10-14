@@ -156,6 +156,9 @@ async def check(args: argparse.Namespace) -> dict[str, object]:
                     )
                     await route.fulfill(response=response)
 
+                # Fail closed: no unexpected browser request may reach the internet.
+                # The narrower local-checkout route below takes precedence.
+                await context.route("**/*", lambda route: route.abort())
                 await context.route(origin + "/**", serve_checkout)
                 await context.add_init_script("localStorage.setItem('infiniteAnalysis', 'true')")
                 if args.without_wasm:

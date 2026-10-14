@@ -34,8 +34,9 @@ refreshes its registration automatically. Select the browser engine to switch ba
 the remove button removes an external registration. Only one tab can use the native
 engine at a time. Account tokens stay in the local app; search traffic stays local.
 
-This release is verified on Linux x86_64 with Chromium and Edge. Firefox native UI,
-Safari and other operating systems remain unverified. Connection controls require
+Linux x86_64 native transport and integrated UI are verified with Chromium 154,
+Edge 155 and Firefox 155. Firefox permission Allow was verified; explicit denial
+remains a manual check. Safari and other operating systems remain unverified. Connection controls require
 Pychess's external-engine frontend integration.
 
 For configuration, resource limits and troubleshooting, see the

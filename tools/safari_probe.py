@@ -15,12 +15,12 @@ from urllib.parse import urlsplit
 from aiohttp import web
 
 from tools.transport_probe import STATE, create_app
+from tools.site_safety import require_nonproduction_https
 
 
 async def check(site: str) -> dict[str, object]:
+    require_nonproduction_https(site)
     origin_parts = urlsplit(site)
-    if origin_parts.scheme != "https":
-        raise ValueError("--site must be HTTPS")
     origin = f"{origin_parts.scheme}://{origin_parts.netloc}"
     token = secrets.token_urlsafe(32)
     app = create_app(token=token, origins=(origin,), authority="", max_seconds=10)
@@ -127,7 +127,7 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--site", default="https://www.pychess.org/analysis/chess")
+    parser.add_argument("--site", required=True, help="Non-production HTTPS fixture with COOP/COEP headers")
     args = parser.parse_args()
     try:
         result = asyncio.run(check(args.site))

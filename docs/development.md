@@ -54,13 +54,20 @@ retains complete history and verifies every PV token. Update
 
 ## Browser checks
 
+Browser tests must not access the production Pychess server. `browser_probe`
+serves a synthetic HTTPS document entirely through Playwright interception;
+`ui_probe` intercepts the Pychess HTTPS origin and serves the local checkout.
+`study_probe` also uses local services. `safari_probe` requires an explicit
+non-production HTTPS fixture URL with COOP/COEP headers. Do not use any
+`pychess.org` address for the Safari fixture.
+
 Probes use temporary apps and fresh browser profiles. Install Playwright's browser
 where needed, for example `uv run python -m playwright install firefox`. Chromium can
 use a system binary; Edge uses its installed channel. Keep normal browser security
 and permissions enabled. Reports omit pairing tokens and should be saved outside
 maintained docs, such as `/tmp`, or attached to the relevant review/release.
 
-For native streaming from the deployed HTTPS analysis page:
+For native streaming against a fully synthetic HTTPS page (no production requests):
 
 ```bash
 uv run python -m tools.browser_probe --browser edge \
@@ -74,8 +81,10 @@ uv run python -m tools.browser_probe --browser firefox --headed --manual-permiss
   --engine /path/to/fairy-stockfish --setoption 'Use NNUE' false
 ```
 
-That probe waits for the user to allow access. Do not claim denial or native UI coverage
-from an Allow-only transport result. The fake transport helper remains useful for
+That probe waits for the user to allow access. Firefox 155 also passed the
+separate local-checkout UI probe (pairing, PV navigation, source switching,
+competing tabs, cleanup, reconnection, and removal). Permission denial remains
+unverified; do not infer denial coverage from an Allow-only result. The fake transport helper remains useful for
 isolating HTTP/browser issues; its events are marked `prototype: true` and are never
 real evaluations.
 
@@ -213,7 +222,9 @@ use `uv build --no-sources --out-dir /tmp/<build-directory>` to preserve release
 
 ### Real Safari diagnostic (manual CI)
 
-Run the **Real Safari diagnostic** GitHub Actions workflow via *Run workflow*.
+Run the **Real Safari diagnostic** GitHub Actions workflow via *Run workflow*
+and provide the URL of a dedicated HTTPS fixture with COOP/COEP headers (never
+the production Pychess site).
 It uses `macos-15`, Apple's actual Safari/SafariDriver, a disposable loopback
 prototype, and a public HTTPS Pychess analysis page. No engine or site state is
 modified. It verifies valid/invalid pairing HTTP responses and secure-context

@@ -26,6 +26,7 @@ from pychess_external_engine.app import STATE as NATIVE_STATE
 from pychess_external_engine.app import create_app as create_native_app
 from pychess_external_engine.config import EngineConfig
 from tools.transport_probe import STATE, create_app
+from tools.site_safety import require_nonproduction_https
 
 START_STREAM = """async ({address, token, analysis, searchId}) => {
   const controller = new AbortController();
@@ -91,6 +92,7 @@ async def check_browser(
     manual_permission: bool = False,
     engine_config: EngineConfig | None = None,
 ) -> dict[str, object]:
+    require_nonproduction_https(site)
     parsed = urlsplit(site)
     origin = f"{parsed.scheme}://{parsed.netloc}"
     token = secrets.token_urlsafe(32)
@@ -109,6 +111,23 @@ async def check_browser(
     state.authority = f"127.0.0.1:{port}"
     address = f"http://127.0.0.1:{port}"
     context = await browser.new_context()
+
+    async def serve_fixture(route):
+        # Every browser request is intercepted; unexpected URLs fail closed.
+        if route.request.url == site:
+            await route.fulfill(
+                status=200, content_type="text/html",
+                headers={
+                    "Cross-Origin-Opener-Policy": "same-origin",
+                    "Cross-Origin-Embedder-Policy": "require-corp",
+                    "Cache-Control": "no-store",
+                },
+                body="<!doctype html><html><head><title>Local probe</title></head><body></body></html>",
+            )
+        else:
+            await route.abort()
+
+    await context.route("**/*", serve_fixture)
     permission_session: CDPSession | None = None
     report: dict[str, object] = {
         "browser": kind,
@@ -296,7 +315,7 @@ def main() -> None:
         choices=("chromium", "edge", "firefox", "webkit"),
         default="chromium",
     )
-    parser.add_argument("--site", default="https://www.pychess.org/analysis/chess")
+    parser.add_argument("--site", default="https://probe.pychess.invalid/analysis/chess")
     parser.add_argument("--output")
     parser.add_argument("--engine", help="Test the production API with this native UCI executable")
     parser.add_argument(
@@ -309,8 +328,10 @@ def main() -> None:
         help="Wait up to 60 seconds for manual Allow",
     )
     args = parser.parse_args()
-    if urlsplit(args.site).scheme != "https":
-        parser.error("the test site must use HTTPS")
+    try:
+        require_nonproduction_https(args.site)
+    except ValueError as exc:
+        parser.error(str(exc))
     if args.manual_permission and not args.headed:
         parser.error("manual permission verification requires --headed")
     asyncio.run(run(args))

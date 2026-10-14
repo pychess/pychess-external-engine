@@ -11,9 +11,9 @@ this simplified interface; use the source checkout for the Alice commands below.
 ## Requirements
 
 Use Linux x86_64 with a compatible native UCI executable. The initial browser matrix
-is Chromium 154 or Edge 155 on Linux. Firefox's transport prototype passed, but its
-native UI and denial flow remain experimental. Safari, Windows and macOS are not
-verified for this release. See [compatibility](compatibility.md) for browser and
+includes Chromium 154, Edge 155 and Firefox 155 on Linux. Firefox native
+transport and UI passed; explicit local-network permission denial remains
+unverified. Safari, Windows and macOS are not verified for this release. See [compatibility](compatibility.md) for browser and
 engine coverage.
 
 Clean installations are verified on CPython 3.11.13, 3.12.9, 3.13.13 and 3.14.1.

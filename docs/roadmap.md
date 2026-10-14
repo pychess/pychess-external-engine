@@ -16,8 +16,8 @@ use the saved configuration. Add clear setup, upgrade and configuration diagnost
 
 ## Broader verification
 
-Finish Firefox native UI and permission-denial checks with manual assistance when
-necessary. Test real Safari/macOS and supported Windows/macOS/Linux architectures;
+Finish Firefox permission-denial and Alice-specific browser checks; native
+Fairy-Stockfish transport and UI checks have passed on Firefox 155. Test real Safari/macOS and supported Windows/macOS/Linux architectures;
 Linux WebKit does not substitute for Safari. Expand native/custom-variant tests with
 exact rules and legal histories before adding compatibility claims.
 

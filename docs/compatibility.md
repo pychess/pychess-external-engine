@@ -13,9 +13,14 @@ a variant name or successful replay alone does not establish search support.
 | Python | CPython 3.11–3.14; clean installs tested on 3.11.13, 3.12.9, 3.13.13 and 3.14.1 |
 | Chromium 154.0.8037.57 | Native HTTPS-to-loopback transport, permission allow/deny and integrated UI |
 | Edge 155.0.4283.45 | Native transport/UI, permission allow/deny, ownership, cleanup and restart |
-| Firefox 155.0 | Transport with manual Allow passed; native UI and denial remain unverified |
+| Firefox 155.0 | Native transport with manual Allow and integrated UI passed on Linux: pairing/discovery, evaluation, PV navigation, desktop/mobile light/dark layouts, source switching, competing-tab ownership, tab-close cleanup, reconnect and removal. Explicit permission denial remains unverified |
 | Linux WebKit 26.6 | HTTP loopback rejected; this does not establish real Safari behaviour |
 | Safari | Unverified; no supported fallback implemented |
+
+Firefox 155 shares the verified Linux native integration tier with Chromium and
+Edge. The Firefox checks used Fairy-Stockfish 260826 LB; Alice-specific Firefox
+UI and permission-denial behavior have not been verified. The local UI probe
+serves a checkout through intercepted HTTPS routing, not the production server.
 
 The browser probes preserved normal security, cross-origin isolation and
 SharedArrayBuffer. Tested Pychess responses used COOP `same-origin` and COEP

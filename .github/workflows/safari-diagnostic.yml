@@ -2,6 +2,11 @@ name: Real Safari diagnostic
 
 on:
   workflow_dispatch:
+    inputs:
+      fixture_url:
+        description: "Non-production HTTPS fixture URL with COOP/COEP headers"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -22,9 +27,11 @@ jobs:
           defaults write com.apple.Safari AllowRemoteAutomation -bool true
           sudo -n safaridriver --enable
       - name: Run real Safari loopback diagnostic
+        env:
+          SAFARI_FIXTURE_URL: ${{ inputs.fixture_url }}
         run: |
           uv run --with selenium python -m tools.safari_probe \
-            > safari-diagnostic.json
+            --site "$SAFARI_FIXTURE_URL" > safari-diagnostic.json
           cat safari-diagnostic.json
       - uses: actions/upload-artifact@v4
         if: always()
