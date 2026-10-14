@@ -91,13 +91,17 @@ async def check(site: str) -> dict[str, object]:
             """
             result = driver.execute_async_script(script, address, token)
             if "error" in result:
-                raise AssertionError(json.dumps({
-                    "browser": driver.capabilities.get("browserName"),
-                    "version": driver.capabilities.get("browserVersion"),
-                    "context": context,
-                    "fetch": result,
-                    "requestsSeen": list(requests_seen),
-                }))
+                raise AssertionError(
+                    json.dumps(
+                        {
+                            "browser": driver.capabilities.get("browserName"),
+                            "version": driver.capabilities.get("browserVersion"),
+                            "context": context,
+                            "fetch": result,
+                            "requestsSeen": list(requests_seen),
+                        }
+                    )
+                )
             if result != {"validStatus": 200, "prototype": True, "invalidStatus": 401}:
                 raise AssertionError(f"Unexpected transport results: {result}")
             return {
