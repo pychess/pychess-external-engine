@@ -1,5 +1,8 @@
 # Pychess External Engine
 
+[![CI](https://github.com/pychess/pychess-external-engine/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/pychess/pychess-external-engine/actions/workflows/ci.yml)
+[![PyPI version](https://img.shields.io/pypi/v/pychess-external-engine.svg)](https://pypi.org/project/pychess-external-engine/)
+
 Analyse positions on [Pychess](https://www.pychess.org) with native engines running
 on your own computer. Use your own UCI-compatible engine for its supported variants.
 The required `pyffish` and `pyffish-alice` libraries validate rules and moves;
