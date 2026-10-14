@@ -14,8 +14,8 @@ from urllib.parse import urlsplit
 
 from aiohttp import web
 
-from tools.transport_probe import STATE, create_app
 from tools.site_safety import require_nonproduction_https
+from tools.transport_probe import STATE, create_app
 
 
 async def check(site: str) -> dict[str, object]:

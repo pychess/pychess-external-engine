@@ -25,8 +25,8 @@ from playwright.async_api import (
 from pychess_external_engine.app import STATE as NATIVE_STATE
 from pychess_external_engine.app import create_app as create_native_app
 from pychess_external_engine.config import EngineConfig
-from tools.transport_probe import STATE, create_app
 from tools.site_safety import require_nonproduction_https
+from tools.transport_probe import STATE, create_app
 
 START_STREAM = """async ({address, token, analysis, searchId}) => {
   const controller = new AbortController();
@@ -123,7 +123,10 @@ async def check_browser(
                     "Cross-Origin-Embedder-Policy": "require-corp",
                     "Cache-Control": "no-store",
                 },
-                body="<!doctype html><html><head><title>Local probe</title></head><body></body></html>",
+                body=(
+                    "<!doctype html><html><head><title>Local probe</title></head>"
+                    "<body></body></html>"
+                ),
             )
         else:
             await route.abort()
