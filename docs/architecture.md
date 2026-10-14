@@ -25,6 +25,22 @@ Pychess website -> browser analysis controller
 See [protocol.md](protocol.md) for the HTTP contract and
 [development.md](development.md) for repeatable checks.
 
+## Comparison with Lichess external engines
+
+This bridge implements same-computer native analysis: the browser contacts IPv4
+loopback directly, and the website manages account registrations. Lichess's
+[external-engine broker](https://github.com/lichess-org/lila-engine) relays requests
+and results between a browser and an engine provider, allowing them to run on
+different machines. Its provider acquires queued work and submits results through
+separate broker endpoints; this app streams evaluations through the browser's
+original `/v1/analyse` response.
+
+Account discovery does not make this bridge reachable from a phone, another
+computer or a VPS client. Remote analysis would require additional transport and
+client/provider lifecycle support. The Pychess
+[integration comparison](https://github.com/pychess/pychess-variants/blob/external-engine-analysis/docs/external-engine.md#comparison-with-lichess-external-engines)
+maps the endpoints and describes the remaining work for Lichess-style remote support.
+
 ## Application boundaries
 
 | Module | Responsibility |
