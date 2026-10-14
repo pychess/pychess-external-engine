@@ -9,11 +9,10 @@ from __future__ import annotations
 import asyncio
 import json
 import secrets
+from importlib import import_module
 from urllib.parse import urlsplit
 
 from aiohttp import web
-from selenium import webdriver
-from selenium.webdriver.safari.options import Options
 
 from tools.transport_probe import STATE, create_app
 
@@ -34,7 +33,11 @@ async def check(site: str) -> dict[str, object]:
     address = f"http://127.0.0.1:{port}"
 
     def browser_check() -> dict[str, object]:
-        options = Options()
+        # Selenium is supplied only to the Safari workflow via `uv run --with selenium`.
+        # Import it at runtime so the ordinary project type checks do not require it.
+        webdriver = import_module("selenium.webdriver")
+        options_module = import_module("selenium.webdriver.safari.options")
+        options = options_module.Options()
         driver = webdriver.Safari(options=options)
         try:
             driver.set_page_load_timeout(30)
