@@ -1,9 +1,9 @@
 # Compatibility
 
-The verification basis is release `0.1.0`, the current source's single-engine native/UI
-checks, and earlier transport coverage from `0.1.0a1`. Availability requires matching
-native engine support, rules-library support and website analysis permission. A handshake,
-a variant name or successful replay alone does not establish search support.
+The verification basis includes clean-install checks across Python 3.11–3.14,
+single-engine native/UI checks and browser transport checks. Availability requires
+matching native engine support, rules-library support and website analysis permission.
+A handshake, a variant name or successful replay alone does not establish search support.
 
 ## Platforms and browsers
 
@@ -58,10 +58,10 @@ variant name, verifying actual board rules, Practice ownership and computer perm
 Settings were checked at desktop/mobile sizes in light/dark themes. Alice UI uses its
 NNUE network with WASM search blocked.
 
-The source's single-engine interface uses the same `--engine` and `--setoption`
+The single-engine interface uses the same `--engine` and `--setoption`
 arguments for Fairy-Stockfish and Alice-Stockfish. Fresh Edge checks cover native
 search, discovery, PV navigation, ownership, permission denial and restart for each
-executable against the local Pychess checkout. PyPI `0.1.0` predates this interface.
+executable against the local Pychess checkout.
 
 Plain wheel installs include both rules libraries and were verified across the four
 Python versions above. Source installation, public uvx installation, CLI discovery,

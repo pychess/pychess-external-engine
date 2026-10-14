@@ -1,12 +1,10 @@
 # Install and use the local engine app
 
-Version `0.1.0` uses account-token registration and requires the matching Pychess
-frontend/server integration. The earlier `0.1.0a1` manual connection flow is described
-in its [release README](https://github.com/pychess/pychess-external-engine/tree/v0.1.0a1).
+Version `0.2.0` uses account-token registration and requires the matching Pychess
+frontend/server integration.
 
-The source checkout configures one UCI executable per run through `--engine`,
-`--engine-arg` and `--setoption`, including Alice engines. PyPI `0.1.0` predates
-this simplified interface; use the source checkout for the Alice commands below.
+Configure one UCI executable per run through `--engine`, `--engine-arg` and
+`--setoption`, including Alice engines.
 
 ## Requirements
 
@@ -29,7 +27,7 @@ Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then laun
 app with your own compatible UCI engine and an account engine token:
 
 ```bash
-uvx --python 3.13 pychess-external-engine@0.1.0 \
+uvx --python 3.13 pychess-external-engine@0.2.0 \
   --engine /absolute/path/to/your-uci-engine --token-file /absolute/path/to/your-token
 ```
 
@@ -53,7 +51,7 @@ To install the release in an isolated environment:
 
 ```bash
 python3 -m venv .venv
-.venv/bin/python -m pip install pychess-external-engine==0.1.0
+.venv/bin/python -m pip install pychess-external-engine==0.2.0
 .venv/bin/pychess-external-engine --help
 ```
 
