@@ -81,10 +81,11 @@ transcripts and temporary credentials out of maintained documentation; historica
 material is available in git and release tags.
 
 Preserve LICENSE/NOTICE attribution. When publishing is requested, use a new package
-version for changed artifacts and publish through `.github/workflows/ci.yml` by
+version for changed artifacts and publish through `.github/workflows/release.yml` by
 pushing its matching `v<version>` tag from a commit already merged into `main`.
-The workflow validates and tests the exact distributions, then publishes with PyPI
-Trusted Publishing. Follow `docs/development.md` for one-time configuration and
-local diagnostics; do not manually upload or create a release tag just to test CI.
+The release workflow calls the reusable CI workflow to validate and test the exact
+distributions, then publishes with PyPI Trusted Publishing. Follow
+`docs/development.md` for one-time configuration and local diagnostics; do not
+manually upload or create a release tag just to test CI.
 Keep publishing credentials outside the repository. Published versions and tags
 are immutable.

@@ -115,20 +115,29 @@ Website changes must also follow that repository's AGENTS.md and quality gates.
 
 ### Automated release
 
-[Python checks and PyPI release](../.github/workflows/ci.yml) runs on branch pushes,
-pull requests and `v*` tags. It checks formatting, lint and types, builds a wheel and
-source archive once, validates versions/metadata/contents, and tests fresh installs
-of both artifacts on Python 3.11–3.14. Each installation runs the full unit suite,
+[Python checks](../.github/workflows/ci.yml) runs on branch pushes, pull requests and
+manual runs, and can be called by another workflow. It checks formatting, lint and
+types, builds a wheel and source archive once, validates versions/metadata/contents,
+and tests fresh installs of both artifacts on Python 3.11–3.14. Each installation
+runs the full unit suite,
 imports both rules libraries and exercises installed CLI registration and shutdown
 during a search using the fake UCI fixture. Native tests skip without configured
 executables; receipts report these skips and the fixture engine explicitly.
 Native-engine and browser compatibility remain separate, explicitly configured checks.
 
+[PyPI release](../.github/workflows/release.yml) runs on `v*` tag pushes and calls
+the same CI workflow at the tagged commit. The CI file contains only validation;
+the release file owns the publishing job and its PyPI permissions. Tagged commits
+run validation once through the release workflow, using the same build/test definitions
+as ordinary CI. Artifacts remain in the same workflow run, so publishing downloads
+the exact distributions checked by that run.
+
 Only a tag push in this repository can publish. The tag must match `pyproject.toml`,
 the runtime version and `uv.lock`; its commit must already be on `main`. The publish
 job waits for all checks, verifies SHA-256 hashes and uploads the tested distributions
-through Trusted Publishing without rebuilding. Branches, pull requests and manual
-workflow runs validate only. Installation receipts are retained as workflow artifacts.
+through Trusted Publishing without rebuilding. Branches and pull requests run CI only;
+manual runs of either workflow validate without publishing. Installation receipts
+are retained as workflow artifacts.
 Use those results for release validation rather than repeating green CI locally.
 
 One-time configuration:
@@ -136,7 +145,8 @@ One-time configuration:
 1. Create a GitHub environment named `pypi`, allowing deployment only from `v*` tags.
 2. In the project's [PyPI Publishing settings](https://pypi.org/manage/project/pychess-external-engine/settings/publishing/),
    add a GitHub Trusted Publisher with owner `pychess`, repository
-   `pychess-external-engine`, workflow filename `ci.yml`, and environment `pypi`.
+   `pychess-external-engine`, workflow filename `release.yml`, and environment `pypi`.
+   Replace any earlier publisher configured for `ci.yml`; only `release.yml` publishes.
 
 No PyPI API token is needed in GitHub secrets. See the
 [PyPI Trusted Publishing documentation](https://docs.pypi.org/trusted-publishers/adding-a-publisher/).
