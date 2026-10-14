@@ -18,7 +18,9 @@ jobs:
         with:
           python-version: "3.13"
       - name: Enable Safari automation
-        run: safaridriver --enable
+        run: |
+          defaults write com.apple.Safari AllowRemoteAutomation -bool true
+          sudo -n safaridriver --enable
       - name: Run real Safari loopback diagnostic
         run: |
           uv run --with selenium python -m tools.safari_probe \
