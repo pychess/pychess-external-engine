@@ -24,6 +24,23 @@ async def check(site: str) -> dict[str, object]:
     origin = f"{origin_parts.scheme}://{origin_parts.netloc}"
     token = secrets.token_urlsafe(32)
     app = create_app(token=token, origins=(origin,), authority="", max_seconds=10)
+    requests_seen: list[dict[str, object]] = []
+
+    @web.middleware
+    async def record_requests(request: web.Request, handler: object) -> web.StreamResponse:
+        event: dict[str, object] = {
+            "method": request.method,
+            "path": request.path,
+            "origin": request.headers.get("Origin"),
+            "preflight": request.headers.get("Access-Control-Request-Method"),
+        }
+        requests_seen.append(event)
+        response = await handler(request)  # type: ignore[operator]
+        event["status"] = response.status
+        return response
+
+    # Put tracing ahead of the access middleware, including rejected preflights.
+    app.middlewares.insert(0, record_requests)
     runner = web.AppRunner(app, access_log=None)
     await runner.setup()
     listener = web.TCPSite(runner, "127.0.0.1", 0)
@@ -60,15 +77,27 @@ async def check(site: str) -> dict[str, object]:
                   });
                   return {status: response.status, body: await response.json()};
                 };
-                const valid = await query(token);
-                const invalid = await query('not-a-valid-token');
-                done({validStatus: valid.status, prototype: valid.body.prototype,
-                      invalidStatus: invalid.status});
-              })().catch(error => done({error: String(error)}));
+                let stage = 'valid credential';
+                try {
+                  const valid = await query(token);
+                  stage = 'invalid credential';
+                  const invalid = await query('not-a-valid-token');
+                  done({validStatus: valid.status, prototype: valid.body.prototype,
+                        invalidStatus: invalid.status});
+                } catch (error) {
+                  done({error: String(error), stage, name: error?.name ?? null});
+                }
+              })().catch(error => done({error: String(error), stage: 'setup'}));
             """
             result = driver.execute_async_script(script, address, token)
             if "error" in result:
-                raise AssertionError(result["error"])
+                raise AssertionError(json.dumps({
+                    "browser": driver.capabilities.get("browserName"),
+                    "version": driver.capabilities.get("browserVersion"),
+                    "context": context,
+                    "fetch": result,
+                    "requestsSeen": list(requests_seen),
+                }))
             if result != {"validStatus": 200, "prototype": True, "invalidStatus": 401}:
                 raise AssertionError(f"Unexpected transport results: {result}")
             return {
