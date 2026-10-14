@@ -1,7 +1,8 @@
 # Compatibility
 
-The verification basis is release `0.1.0a1`. Availability requires matching native
-engine support, rules-library support and website analysis permission. A handshake,
+The verification basis is release `0.1.0` and the browser checks described below,
+including earlier transport coverage from `0.1.0a1`. Availability requires matching
+native engine support, rules-library support and website analysis permission. A handshake,
 a variant name or successful replay alone does not establish search support.
 
 ## Platforms and browsers
@@ -44,7 +45,7 @@ retains its browser backend.
 
 Native UI checks cover PV navigation, source selection, competing tabs, abort/tab-close
 cleanup, reconnect/removal, permission denial and bridge restart/token rotation. The
-unreleased account-registration flow also verifies owner discovery and the engine
+account-registration flow also verifies owner discovery and the engine
 dropdown in Edge, including Alice without WASM search. Exact
 rules checks cover CWDA without WASM search and Capablanca's initial Embassy profile.
 Study checks switch ordinary/custom chapters and historical versions of one public

@@ -1,8 +1,8 @@
 # Install and use the local engine app
 
-The published alpha is `0.1.0a1` and uses the previous manual connection flow.
-Account-token registration in this checkout is unreleased and requires the matching
-Pychess frontend/server changes. The instructions below describe that new flow.
+Version `0.1.0` uses account-token registration and requires the matching Pychess
+frontend/server integration. The earlier `0.1.0a1` manual connection flow is described
+in its [release README](https://github.com/pychess/pychess-external-engine/tree/v0.1.0a1).
 
 ## Requirements
 
@@ -22,16 +22,15 @@ itself contains Python code; native engines and networks are not bundled.
 ## Recommended: uvx
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then launch the
-source checkout with your own compatible UCI engine and an account engine token:
+app with your own compatible UCI engine and an account engine token:
 
 ```bash
-uvx --python 3.13 --from . pychess-external-engine \
+uvx --python 3.13 pychess-external-engine@0.1.0 \
   --engine /absolute/path/to/your-uci-engine --token-file /absolute/path/to/your-token
 ```
 
-uv manages Python and the isolated dependencies. Until this flow is released,
-run from this source checkout. Both rules libraries are required dependencies. uv can
-download a matching Python when missing. Engines and networks are not downloaded
+uv manages Python and the isolated dependencies. Both rules libraries are required
+dependencies. uv can download a matching Python when missing. Engines and networks are not downloaded
 by this package. Keep the terminal running, select the engine in analysis settings,
 and stop with Ctrl+C. Fairy-Stockfish and Alice-Stockfish below are tested examples;
 users choose and supply their own compatible UCI executables and networks.
@@ -44,7 +43,15 @@ Pass that file using `--token-file`, or set `PYCHESS_API_TOKEN` in the app's env
 Use a separate token for each installation. Engine tokens permit registration and
 discovery without BOT gameplay access; no account upgrade is needed.
 
-## Install from this source checkout
+## Install with pip or from source
+
+To install the release in an isolated environment:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install pychess-external-engine==0.1.0
+.venv/bin/pychess-external-engine --help
+```
 
 Use an isolated environment. From the `pychess-external-engine` checkout:
 

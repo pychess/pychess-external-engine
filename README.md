@@ -5,18 +5,17 @@ on your own computer. Use your own UCI-compatible engine for its supported varia
 The required `pyffish` and `pyffish-alice` libraries validate rules and moves;
 they do not choose your analysis engine.
 
-Account-token registration is unreleased and needs the matching Pychess integration.
-The published `0.1.0a1` uses the earlier manual connection flow; see its
-[release README](https://github.com/pychess/pychess-external-engine/tree/v0.1.0a1).
+Version `0.1.0` registers your local engine with a Pychess account token and requires
+the matching Pychess frontend/server integration.
 
 ## Install and run
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and obtain your
 engine executable. Create an engine token at Pychess **Account → External engines**
-and save it to a local file. From this checkout, run:
+and save it to a local file. Run:
 
 ```bash
-uvx --python 3.13 --from . pychess-external-engine \
+uvx --python 3.13 pychess-external-engine@0.1.0 \
   --engine /path/to/your-uci-engine --token-file /path/to/your-token
 ```
 
@@ -35,7 +34,7 @@ refreshes its registration automatically. Select the browser engine to switch ba
 the remove button removes an external registration. Only one tab can use the native
 engine at a time. Account tokens stay in the local app; search traffic stays local.
 
-This alpha is verified on Linux x86_64 with Chromium and Edge. Firefox native UI,
+This release is verified on Linux x86_64 with Chromium and Edge. Firefox native UI,
 Safari and other operating systems remain unverified. Connection controls require
 Pychess's external-engine frontend integration.
 
