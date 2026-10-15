@@ -1,6 +1,6 @@
 # Install and use the local engine app
 
-Version `0.2.0` uses account-token registration and requires the matching Pychess
+The app uses account-token registration and requires compatible Pychess
 frontend/server integration.
 
 Configure one UCI executable per run through `--engine`, `--engine-arg` and
@@ -27,12 +27,24 @@ Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then laun
 app with your own compatible UCI engine and an account engine token:
 
 ```bash
-uvx --python 3.13 pychess-external-engine@0.2.0 \
+uvx pychess-external-engine \
   --engine /absolute/path/to/your-uci-engine --token-file /absolute/path/to/your-token
 ```
 
-uv manages Python and the isolated dependencies. Both rules libraries are required
-dependencies. uv can download a matching Python when missing. Engines and networks are not downloaded
+`uvx` selects a compatible Python interpreter and runs the package in an isolated
+managed environment. Neither `--python 3.13` nor `@0.2.0` is needed for normal use:
+the package declares its Python requirement, and an unpinned command uses a current
+compatible release (subject to uv caching). To reproduce a specific setup, use
+`uvx --python 3.13 pychess-external-engine@0.2.0 ...`; to explicitly request the
+latest release, use `uvx pychess-external-engine@latest ...`. uv can download a
+compatible Python if one is not installed.
+
+The required `pyffish==0.0.90` and `pyffish-alice==0.0.3` provide prebuilt
+wheels for CPython 3.11–3.14 on Linux x86_64, Windows x64 and macOS Intel/Apple
+Silicon. Wheel availability does **not** mean this application's native engine,
+browser integration and startup have been verified on all those platforms.
+Other architectures may need source compilation or may fail to install; see
+[compatibility](compatibility.md). Engines and networks are never downloaded
 by this package. Keep the terminal running, select the engine in analysis settings,
 and stop with Ctrl+C. Fairy-Stockfish and Alice-Stockfish below are tested examples;
 users choose and supply their own compatible UCI executables and networks.
@@ -51,7 +63,7 @@ To install the release in an isolated environment:
 
 ```bash
 python3 -m venv .venv
-.venv/bin/python -m pip install pychess-external-engine==0.2.0
+.venv/bin/python -m pip install pychess-external-engine
 .venv/bin/pychess-external-engine --help
 ```
 
@@ -63,7 +75,8 @@ python3 -m venv .venv
 .venv/bin/pychess-external-engine --help
 ```
 
-Both rules libraries are included. If using a built wheel, replace `.` with its path.
+Both rules libraries are installed as dependencies (not bundled into the app wheel).
+If using a built wheel, replace `.` with its path.
 To install source from an archive, unpack it and run the same commands inside the
 unpacked directory. Keep the source checkout when
 you want the reproducible probes under `tools/`; those development tools are not

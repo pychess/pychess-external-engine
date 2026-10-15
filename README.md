@@ -8,8 +8,8 @@ on your own computer. Use your own UCI-compatible engine for its supported varia
 The required `pyffish` and `pyffish-alice` libraries validate rules and moves;
 they do not choose your analysis engine.
 
-Version `0.2.0` registers your local engine with a Pychess account token and requires
-the matching Pychess frontend/server integration.
+The app registers your local engine with a Pychess account token and requires
+compatible Pychess frontend/server integration.
 
 ## Install and run
 
@@ -18,7 +18,7 @@ engine executable. Create an engine token at Pychess **Account → External engi
 and save it to a local file. Run:
 
 ```bash
-uvx --python 3.13 pychess-external-engine@0.2.0 \
+uvx pychess-external-engine \
   --engine /path/to/your-uci-engine --token-file /path/to/your-token
 ```
 

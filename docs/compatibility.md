@@ -17,6 +17,14 @@ A handshake, a variant name or successful replay alone does not establish search
 | Linux WebKit 26.6 | HTTP loopback rejected; this does not establish real Safari behaviour |
 | Safari | Unverified; no supported fallback implemented |
 
+The pinned rules dependencies (`pyffish==0.0.90` and
+`pyffish-alice==0.0.3`) publish CPython 3.11–3.14 wheels for Linux x86_64,
+Windows x64 and macOS Intel/Apple Silicon. These are **installation artifacts**,
+not evidence of tested browser/native-engine integration on those systems.
+Other architectures may require compilation from source, with no guarantee of
+success. The unpinned `uvx pychess-external-engine` command chooses a compatible
+Python and application release; use explicit pins only for reproducibility.
+
 Firefox 155 shares the verified Linux native integration tier with Chromium and
 Edge. The Firefox checks used Fairy-Stockfish 260826 LB; Alice-specific Firefox
 UI and permission-denial behavior have not been verified. The local UI probe
